@@ -40,7 +40,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
           className="h-9"
         />
       </div>
-      <div className="px-3 pt-3">
+      <div className="border-b border-border px-3 pt-3 pb-3">
         <Tabs value={inbox.filterTab} onValueChange={(v) => inbox.setFilterTab(v as "all" | "new")}>
           <TabsList className="w-full">
             <TabsTrigger value="all" className="flex-1">

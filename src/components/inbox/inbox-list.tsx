@@ -15,9 +15,11 @@ export function InboxList({ items, selectedId, onSelect }: Props) {
 
   return (
     <ScrollArea className="h-full">
-      {items.map((item) => (
-        <InboxItemRow key={item.id} item={item} isSelected={item.id === selectedId} onClick={() => onSelect(item.id)} />
-      ))}
+      <div className="flex flex-col gap-1 p-2">
+        {items.map((item) => (
+          <InboxItemRow key={item.id} item={item} isSelected={item.id === selectedId} onClick={() => onSelect(item.id)} />
+        ))}
+      </div>
     </ScrollArea>
   );
 }
