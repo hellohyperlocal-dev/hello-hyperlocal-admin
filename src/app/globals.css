@@ -52,14 +52,16 @@
   --color-primary-pale: var(--primary-pale);
   --color-primary-active: var(--primary-active);
 
-  /* design.md `rounded` scale — fixed values, not derived from a single base */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-pill: 9999px;
-  --radius-full: 9999px;
+  /* shadcn's default radius scale — derived from --radius, not design.md's
+     fixed independent values. Brand colors are untouched; this only changes
+     how rounded cards/buttons/inputs/surfaces are. */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
@@ -97,7 +99,7 @@
   --chart-3: #ffd11a;
   --chart-4: #d03238;
   --chart-5: #38c8ff;
-  --radius: 1rem;
+  --radius: 0.625rem;
   --sidebar: #F5F5F5;
   --sidebar-foreground: #0e0f0c;
   --sidebar-primary: #7ED957;

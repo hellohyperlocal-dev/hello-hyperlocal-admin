@@ -11,17 +11,23 @@ interface Props {
 
 export function InboxNav({ categories, activeCategory, onChange }: Props) {
   return (
-    <nav className="flex flex-col gap-1 p-2">
+    <nav className="flex h-full flex-col gap-1 bg-muted/30 p-3">
+      <p className="px-2 pb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">Categories</p>
       {categories.map((category) => (
         <Button
           key={category.id}
           variant={category.id === activeCategory ? "secondary" : "ghost"}
           onClick={() => onChange(category.id)}
-          className={cn("justify-between", category.id === activeCategory && "font-medium")}
+          className={cn(
+            "h-9 justify-between px-3 text-sm",
+            category.id === activeCategory && "font-medium"
+          )}
         >
-          <span>{category.label}</span>
+          <span className="truncate">{category.label}</span>
           {category.count > 0 && (
-            <Badge variant={category.id === activeCategory ? "default" : "outline"}>{category.count}</Badge>
+            <Badge variant={category.id === activeCategory ? "default" : "outline"} className="ml-2 shrink-0">
+              {category.count}
+            </Badge>
           )}
         </Button>
       ))}

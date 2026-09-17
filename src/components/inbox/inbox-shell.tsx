@@ -26,8 +26,8 @@ export function InboxShell({ categories, items, emptyState }: Props) {
   const inbox = useInbox(items, categories);
 
   const listPane = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2 border-b border-border p-2">
+    <div className="flex h-full flex-col bg-card">
+      <div className="flex items-center gap-2 border-b border-border p-3">
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Categories">
             <Menu className="size-4" />
@@ -37,10 +37,10 @@ export function InboxShell({ categories, items, emptyState }: Props) {
           placeholder="Search…"
           value={inbox.search}
           onChange={(e) => inbox.setSearch(e.target.value)}
-          className="h-8"
+          className="h-9"
         />
       </div>
-      <div className="px-2 pt-2">
+      <div className="px-3 pt-3">
         <Tabs value={inbox.filterTab} onValueChange={(v) => inbox.setFilterTab(v as "all" | "new")}>
           <TabsList className="w-full">
             <TabsTrigger value="all" className="flex-1">
@@ -71,7 +71,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-border">
+      <div className="h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <Sheet open={navOpen} onOpenChange={setNavOpen}>
           <SheetContent side="left" className="w-64">
             <SheetTitle className="p-4">Categories</SheetTitle>
@@ -88,8 +88,8 @@ export function InboxShell({ categories, items, emptyState }: Props) {
         {mobileView === "list" ? (
           listPane
         ) : (
-          <div className="flex h-full flex-col">
-            <div className="flex items-center gap-1 border-b border-border p-2">
+          <div className="flex h-full flex-col bg-card">
+            <div className="flex items-center gap-1 border-b border-border p-3">
               <Button variant="ghost" size="icon" onClick={() => setMobileView("list")} aria-label="Back">
                 <ChevronLeft className="size-4" />
               </Button>
@@ -105,7 +105,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
   return (
     <ResizablePanelGroup
       orientation="horizontal"
-      className="h-[calc(100vh-8rem)] overflow-hidden rounded-lg border border-border"
+      className="h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border bg-card shadow-sm"
     >
       <ResizablePanel defaultSize="15%" minSize="12%">
         <InboxNav categories={categories} activeCategory={inbox.activeCategory} onChange={inbox.setCategory} />
@@ -115,7 +115,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
         {listPane}
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize="55%" minSize="30%">
+      <ResizablePanel defaultSize="55%" minSize="30%" className="bg-card">
         {detailPane}
       </ResizablePanel>
     </ResizablePanelGroup>

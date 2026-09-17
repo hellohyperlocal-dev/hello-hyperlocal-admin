@@ -31,28 +31,32 @@ export function InboxItemRow({ item, isSelected, onClick }: Props) {
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-left transition-colors hover:bg-muted/50",
+        "flex w-full flex-col gap-1.5 px-4 py-4 text-left transition-colors hover:bg-muted/50",
         isSelected && "bg-muted"
       )}
     >
-      <div className="flex items-center gap-2">
-        <Avatar size="sm">
+      <div className="flex items-center gap-3">
+        <Avatar>
           <AvatarFallback>{initials(item.title)}</AvatarFallback>
         </Avatar>
-        <span className={cn("flex-1 truncate text-sm", item.isNew && "font-semibold text-foreground")}>
-          {item.title}
-        </span>
-        <span className="shrink-0 text-xs text-muted-foreground">{formatTimestamp(item.timestamp)}</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className={cn("truncate text-sm", item.isNew && "font-semibold text-foreground")}>
+              {item.title}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">{formatTimestamp(item.timestamp)}</span>
+          </div>
+          <div className="mt-0.5 flex items-center gap-2">
+            <span className="truncate text-xs text-muted-foreground">{item.subtitle}</span>
+            {item.badge && (
+              <Badge variant={item.badge.variant ?? "outline"} className="h-4 shrink-0 px-1.5 text-[10px]">
+                {item.badge.label}
+              </Badge>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-2 pl-8">
-        <span className="text-xs text-muted-foreground">{item.subtitle}</span>
-        {item.badge && (
-          <Badge variant={item.badge.variant ?? "outline"} className="h-4 px-1.5 text-[10px]">
-            {item.badge.label}
-          </Badge>
-        )}
-      </div>
-      <p className="truncate pl-8 text-xs text-muted-foreground">{item.preview}</p>
+      <p className="truncate pl-11 text-xs text-muted-foreground">{item.preview}</p>
     </button>
   );
 }

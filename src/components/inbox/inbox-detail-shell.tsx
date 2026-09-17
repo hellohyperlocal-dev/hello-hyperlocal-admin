@@ -17,11 +17,11 @@ interface Props {
 export function InboxDetailShell({ title, subtitle, timestamp, actions, children }: Props) {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border p-4">
+      <div className="border-b border-border p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+            <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <span className="shrink-0 text-xs text-muted-foreground">
             {new Date(timestamp).toLocaleString("en-ZA")}
@@ -29,7 +29,7 @@ export function InboxDetailShell({ title, subtitle, timestamp, actions, children
         </div>
       </div>
       <ScrollArea className="flex-1">
-        <div className="p-4">{children}</div>
+        <div className="p-6">{children}</div>
       </ScrollArea>
       {actions && <div className="flex items-center gap-2 border-t border-border p-4">{actions}</div>}
     </div>
