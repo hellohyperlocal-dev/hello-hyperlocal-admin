@@ -26,7 +26,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
   const inbox = useInbox(items, categories);
 
   const listPane = (
-    <div className="flex h-full flex-col bg-card">
+    <div className="flex h-full min-w-0 flex-col bg-card overflow-hidden">
       <div className="flex items-center gap-2 border-b border-border p-3">
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setNavOpen(true)} aria-label="Categories">
@@ -52,7 +52,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
           </TabsList>
         </Tabs>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-hidden">
         <InboxList
           items={inbox.filteredItems}
           selectedId={inbox.selectedItem?.id ?? null}
@@ -95,7 +95,7 @@ export function InboxShell({ categories, items, emptyState }: Props) {
               </Button>
               <span className="text-sm text-muted-foreground">Back to list</span>
             </div>
-            <div className="flex-1 overflow-hidden">{detailPane}</div>
+            <div className="min-w-0 flex-1 overflow-hidden">{detailPane}</div>
           </div>
         )}
       </div>
@@ -107,15 +107,15 @@ export function InboxShell({ categories, items, emptyState }: Props) {
       orientation="horizontal"
       className="h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border bg-card shadow-sm"
     >
-      <ResizablePanel defaultSize="15%" minSize="12%">
+      <ResizablePanel defaultSize="15%" minSize="12%" className="min-w-0 overflow-hidden">
         <InboxNav categories={categories} activeCategory={inbox.activeCategory} onChange={inbox.setCategory} />
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize="30%" minSize="22%">
+      <ResizablePanel defaultSize="30%" minSize="22%" className="min-w-0 overflow-hidden">
         {listPane}
       </ResizablePanel>
       <ResizableHandle withHandle />
-      <ResizablePanel defaultSize="55%" minSize="30%" className="bg-card">
+      <ResizablePanel defaultSize="55%" minSize="30%" className="min-w-0 overflow-hidden bg-card">
         {detailPane}
       </ResizablePanel>
     </ResizablePanelGroup>

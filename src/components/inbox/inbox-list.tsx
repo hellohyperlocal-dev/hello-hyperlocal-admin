@@ -1,4 +1,3 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { InboxItemRow } from "./inbox-item";
 import type { InboxItem } from "./types";
 
@@ -14,12 +13,16 @@ export function InboxList({ items, selectedId, onSelect }: Props) {
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-1 p-2">
+    // Plain overflow-y-auto instead of Radix ScrollArea: ScrollArea's
+    // Viewport renders as display:table internally, which lets long
+    // unbroken text (truncate) grow past the container instead of being
+    // clipped — a known Radix gotcha. A normal scroll div avoids it.
+    <div className="h-full min-w-0 overflow-y-auto">
+      <div className="flex min-w-0 flex-col gap-1 p-2">
         {items.map((item) => (
           <InboxItemRow key={item.id} item={item} isSelected={item.id === selectedId} onClick={() => onSelect(item.id)} />
         ))}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
