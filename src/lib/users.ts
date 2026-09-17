@@ -58,3 +58,50 @@ export async function getUserEmail(id: string): Promise<string | null> {
   if (error || !data.user) return null;
   return data.user.email ?? null;
 }
+
+export interface UserDetail extends UserRow {
+  email: string | null;
+  communityPostsCount: number;
+  marketplaceListingsCount: number;
+  loveLocalOffersCount: number;
+  rsvpCount: number;
+  recentPosts: { id: string; title: string; moderation_status: string; created_at: string }[];
+}
+
+export async function getUserDetail(id: string): Promise<UserDetail | null> {
+  const admin = createAdminClient();
+
+  const [profileResult, email, postsCount, listingsCount, offersCount, rsvpsCount, recentPostsResult] =
+    await Promise.all([
+      admin
+        .from("profiles")
+        .select(
+          "id, role, full_name, phone_number, street_address, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at"
+        )
+        .eq("id", id)
+        .single(),
+      getUserEmail(id),
+      admin.from("community_posts").select("id", { count: "exact", head: true }).eq("author_id", id),
+      admin.from("marketplace_listings").select("id", { count: "exact", head: true }).eq("author_id", id),
+      admin.from("love_local_offers").select("id", { count: "exact", head: true }).eq("author_id", id),
+      admin.from("event_rsvps").select("id", { count: "exact", head: true }).eq("user_id", id),
+      admin
+        .from("community_posts")
+        .select("id, title, moderation_status, created_at")
+        .eq("author_id", id)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
+
+  if (!profileResult.data) return null;
+
+  return {
+    ...(profileResult.data as UserRow),
+    email,
+    communityPostsCount: postsCount.count ?? 0,
+    marketplaceListingsCount: listingsCount.count ?? 0,
+    loveLocalOffersCount: offersCount.count ?? 0,
+    rsvpCount: rsvpsCount.count ?? 0,
+    recentPosts: (recentPostsResult.data as UserDetail["recentPosts"]) ?? [],
+  };
+}

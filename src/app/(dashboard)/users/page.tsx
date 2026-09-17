@@ -107,7 +107,11 @@ function UsersTable({
           ) : (
             users.map((user) => (
               <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.full_name || user.business_name || "—"}</TableCell>
+                <TableCell className="font-medium">
+                  <Link href={`/users/${user.id}`} className="hover:underline">
+                    {user.full_name || user.business_name || "—"}
+                  </Link>
+                </TableCell>
                 <TableCell className="capitalize">{user.role}</TableCell>
                 <TableCell>{user.ward || "—"}</TableCell>
                 <TableCell>{user.phone_number || "—"}</TableCell>
