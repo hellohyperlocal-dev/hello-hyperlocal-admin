@@ -46,3 +46,51 @@ export async function getTrafficSummary(days: 7 | 30): Promise<TrafficSummary> {
     activeUsers: Number(values[2]?.value ?? 0),
   };
 }
+
+export interface DailyTraffic {
+  date: string; // "YYYY-MM-DD"
+  sessions: number;
+  pageViews: number;
+}
+
+/** Day-by-day breakdown for the trailing N days, for charting. GA4 returns
+ * dates as "YYYYMMDD" strings — reformatted here to "YYYY-MM-DD". Missing
+ * days (no traffic) are filled with zeros so the chart has a continuous
+ * x-axis rather than gaps. */
+export async function getDailyTraffic(days: 7 | 30): Promise<DailyTraffic[]> {
+  const propertyId = process.env.GA4_PROPERTY_ID;
+  if (!propertyId) {
+    throw new Error("GA4_PROPERTY_ID is not configured.");
+  }
+
+  const client = getClient();
+  const [response] = await client.runReport({
+    property: `properties/${propertyId}`,
+    dateRanges: [{ startDate: `${days}daysAgo`, endDate: "today" }],
+    dimensions: [{ name: "date" }],
+    metrics: [{ name: "sessions" }, { name: "screenPageViews" }],
+    orderBys: [{ dimension: { dimensionName: "date" } }],
+  });
+
+  const byDate = new Map<string, { sessions: number; pageViews: number }>();
+  for (const row of response.rows ?? []) {
+    const raw = row.dimensionValues?.[0]?.value ?? "";
+    const formatted = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+    byDate.set(formatted, {
+      sessions: Number(row.metricValues?.[0]?.value ?? 0),
+      pageViews: Number(row.metricValues?.[1]?.value ?? 0),
+    });
+  }
+
+  // Fill every day in the range, even ones GA4 omitted (zero traffic).
+  const result: DailyTraffic[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const entry = byDate.get(key);
+    result.push({ date: key, sessions: entry?.sessions ?? 0, pageViews: entry?.pageViews ?? 0 });
+  }
+
+  return result;
+}
