@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, BarChart3, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Users, BarChart3, Inbox, ShieldCheck, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
   href: string;
@@ -11,5 +11,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/councillors", label: "Ward Councillors", icon: Users },
+  { href: "/registrations", label: "Registrations", icon: Inbox },
+  { href: "/moderation", label: "Moderation", icon: ShieldCheck },
   { href: "/analytics", label: "Website traffic", icon: BarChart3 },
 ];
