@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthShell } from "@/components/auth-shell";
 
 export default function VerifyOtpPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function VerifyOtpPage() {
       return;
     }
 
-    router.push("/councillors");
+    router.push("/");
     router.refresh();
   }
 
@@ -57,15 +58,10 @@ export default function VerifyOtpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
-      <div className="w-full max-w-sm rounded-xl bg-card p-8">
-        <div className="mb-6 space-y-1 text-center">
-          <p className="text-xs font-semibold tracking-wide text-accent-foreground uppercase">Hello Linden</p>
-          <h1 className="text-2xl font-semibold text-foreground">Confirm it&apos;s you</h1>
-          <p className="text-sm text-muted-foreground">
-            First time signing in — enter the code we emailed you to finish setting up this account.
-          </p>
-        </div>
+    <AuthShell title="Confirm it's you">
+        <p className="mb-6 -mt-4 text-center text-sm text-muted-foreground">
+          First time signing in — enter the code we emailed you to finish setting up this account.
+        </p>
 
         {info && (
           <Alert className="mb-4">
@@ -107,7 +103,6 @@ export default function VerifyOtpPage() {
         >
           {resending ? "Sending…" : "Didn't get a code? Resend"}
         </button>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

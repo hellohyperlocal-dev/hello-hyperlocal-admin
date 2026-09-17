@@ -1,7 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { isPreviewMode } from "@/lib/preview-mode";
-import { SignOutButton } from "@/components/sign-out-button";
-import { NavLinks } from "@/components/nav-links";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AppHeader } from "@/components/layout/app-header";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
@@ -13,22 +14,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
           Preview mode — sample data only, no sign-in required, no changes are saved.
         </div>
       )}
-      <div className="flex flex-1">
-        <aside className="flex w-64 shrink-0 flex-col justify-between border-r border-sidebar-border bg-sidebar p-4">
-          <div>
-            <div className="mb-6 px-2">
-              <p className="text-xs font-semibold tracking-wide text-accent-foreground uppercase">Hello Linden</p>
-              <p className="text-sm font-medium text-sidebar-foreground">Admin</p>
-            </div>
-            <NavLinks />
-          </div>
-          <div className="space-y-2 px-2">
-            <p className="truncate text-xs text-muted-foreground">{admin.full_name || "Admin"}</p>
-            {!isPreviewMode && <SignOutButton />}
-          </div>
-        </aside>
-        <main className="flex-1 p-8">{children}</main>
-      </div>
+      <SidebarProvider className="flex-1">
+        <AppSidebar adminName={admin.full_name || "Admin"} />
+        <SidebarInset>
+          <AppHeader />
+          <main className="flex-1 p-8">{children}</main>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   );
 }

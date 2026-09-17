@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthShell } from "@/components/auth-shell";
 
 type Status = "checking" | "ready" | "expired";
 
@@ -74,13 +75,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
-      <div className="w-full max-w-sm rounded-xl bg-card p-8">
-        <div className="mb-6 space-y-1 text-center">
-          <p className="text-xs font-semibold tracking-wide text-accent-foreground uppercase">Hello Linden</p>
-          <h1 className="text-2xl font-semibold text-foreground">Set a new password</h1>
-        </div>
-
+    <AuthShell title="Set a new password">
         {status === "checking" && <p className="text-center text-sm text-muted-foreground">Checking your link…</p>}
 
         {status === "expired" && (
@@ -132,7 +127,6 @@ export default function ResetPasswordPage() {
             </Button>
           </form>
         )}
-      </div>
-    </div>
+    </AuthShell>
   );
 }

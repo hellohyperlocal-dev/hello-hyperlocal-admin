@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthShell } from "@/components/auth-shell";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -35,13 +36,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
-      <div className="w-full max-w-sm rounded-xl bg-card p-8">
-        <div className="mb-6 space-y-1 text-center">
-          <p className="text-xs font-semibold tracking-wide text-accent-foreground uppercase">Hello Linden</p>
-          <h1 className="text-2xl font-semibold text-foreground">Reset your password</h1>
-        </div>
-
+    <AuthShell title="Reset your password">
         {sent ? (
           <Alert className="mb-4">
             <AlertDescription>
@@ -79,7 +74,6 @@ export default function ForgotPasswordPage() {
         >
           Back to sign in
         </Link>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

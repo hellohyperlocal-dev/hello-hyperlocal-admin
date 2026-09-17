@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AuthShell } from "@/components/auth-shell";
 
 // No self-service sign-up: admin accounts are loaded manually (directly in
 // Supabase), never created from this form. Sign-in checks credentials AND
@@ -46,18 +47,12 @@ export default function LoginPage() {
     // requireAdmin() (on every (dashboard) page) redirects to /verify-otp
     // automatically for a first-time admin login, sending the confirmation
     // code — nothing more to do here for that.
-    router.push("/councillors");
+    router.push("/");
     router.refresh();
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-4">
-      <div className="w-full max-w-sm rounded-xl bg-card p-8">
-        <div className="mb-6 space-y-1 text-center">
-          <p className="text-xs font-semibold tracking-wide text-accent-foreground uppercase">Hello Linden</p>
-          <h1 className="text-2xl font-semibold text-foreground">Admin sign in</h1>
-        </div>
-
+    <AuthShell title="Admin sign in">
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{error}</AlertDescription>
@@ -99,7 +94,6 @@ export default function LoginPage() {
             {loading ? "Please wait…" : "Sign in"}
           </Button>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

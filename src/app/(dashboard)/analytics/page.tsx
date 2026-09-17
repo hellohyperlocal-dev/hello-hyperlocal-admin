@@ -1,6 +1,7 @@
 import { getTrafficSummary, type TrafficSummary } from "@/lib/ga4";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/stat-card";
 
 const SAMPLE_SUMMARY: TrafficSummary = { sessions: 412, pageViews: 1180, activeUsers: 287 };
 
@@ -62,14 +63,5 @@ export default async function AnalyticsPage({ searchParams }: Props) {
         <StatCard label="Active users" value={summary.activeUsers} />
       </div>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="px-6">
-      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</p>
-      <p className="mt-1 text-3xl font-semibold text-foreground">{value.toLocaleString()}</p>
-    </Card>
   );
 }
