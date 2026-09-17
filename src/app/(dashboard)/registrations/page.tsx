@@ -53,7 +53,7 @@ export default async function RegistrationsPage() {
       ),
     }));
     return (
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <PageHeader />
         <InboxShell
           categories={REGISTRATION_ROLES.map((r) => ({
@@ -73,7 +73,7 @@ export default async function RegistrationsPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <PageHeader />
       <InboxShell categories={categories} items={items} />
     </div>
@@ -120,7 +120,7 @@ function RegistrationDetailView({ item, detail }: { item: InboxItemInput; detail
           <Row
             label="Additional details"
             value={
-              <pre className="whitespace-pre-wrap rounded-md bg-muted p-3 text-xs text-muted-foreground">
+              <pre className="min-w-0 overflow-x-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words text-muted-foreground">
                 {JSON.stringify(detail.details, null, 2)}
               </pre>
             }

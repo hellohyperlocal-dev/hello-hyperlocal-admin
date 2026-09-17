@@ -16,9 +16,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       )}
       <SidebarProvider className="flex-1">
         <AppSidebar adminName={admin.full_name || "Admin"} />
-        <SidebarInset>
+        <SidebarInset className="min-w-0">
           <AppHeader />
-          <main className="flex-1 p-8">{children}</main>
+          <main className="min-w-0 flex-1 p-8">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>

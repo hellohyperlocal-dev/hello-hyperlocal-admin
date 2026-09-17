@@ -34,7 +34,7 @@ export default async function ModerationPage() {
       ),
     }));
     return (
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-4">
         <PageHeader />
         <InboxShell
           categories={MODERATION_CATEGORIES.map((c) => ({
@@ -64,7 +64,7 @@ export default async function ModerationPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       <PageHeader />
       <InboxShell categories={categories} items={items} />
     </div>
@@ -91,12 +91,14 @@ function ContentDetailView({ item, detail }: { item: InboxItemInput; detail: Mod
       timestamp={item.timestamp}
       actions={<ContentActions table={detail.table} id={detail.row.id} />}
     >
-      <div className="space-y-3">
+      <div className="min-w-0 space-y-3">
         {detail.row.image_url && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={detail.row.image_url} alt="" className="max-h-80 rounded-md object-cover" />
+          <img src={detail.row.image_url} alt="" className="max-h-80 w-full max-w-full rounded-md object-cover" />
         )}
-        <p className="text-sm whitespace-pre-wrap text-foreground">{detail.row.content || detail.row.description}</p>
+        <p className="text-sm whitespace-pre-wrap break-words text-foreground">
+          {detail.row.content || detail.row.description}
+        </p>
         {detail.row.price && <p className="text-sm text-muted-foreground">Price: {detail.row.price}</p>}
         <p className="text-xs text-muted-foreground">Category: {detail.row.category}</p>
       </div>
@@ -112,15 +114,17 @@ function ReportDetailView({ item, detail }: { item: InboxItemInput; detail: Repo
       timestamp={item.timestamp}
       actions={<ReportActions id={detail.row.id} />}
     >
-      <div className="space-y-3">
-        <p className="text-sm text-foreground">
+      <div className="min-w-0 space-y-3">
+        <p className="text-sm break-words text-foreground">
           <span className="font-medium">Reason: </span>
           {detail.row.reason || "No reason given"}
         </p>
         {detail.row.community_posts?.content && (
-          <div className="rounded-md border border-border p-3">
+          <div className="min-w-0 rounded-md border border-border p-3">
             <p className="mb-1 text-xs text-muted-foreground">Reported post content:</p>
-            <p className="text-sm whitespace-pre-wrap text-foreground">{detail.row.community_posts.content}</p>
+            <p className="text-sm whitespace-pre-wrap break-words text-foreground">
+              {detail.row.community_posts.content}
+            </p>
           </div>
         )}
       </div>
