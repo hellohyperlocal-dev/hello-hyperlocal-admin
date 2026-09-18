@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SignOutButton } from "@/components/sign-out-button";
+import { HyperlocalLogo } from "@/components/hyperlocal-logo";
 import { NAV_GROUPS } from "@/lib/nav-config";
 import { isPreviewMode } from "@/lib/preview-mode";
 
@@ -37,13 +38,15 @@ export function AppSidebar({ adminName, adminAvatarUrl }: Props) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="px-3 py-4 group-data-[collapsible=icon]:px-2">
-        <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center">
-          <div className="size-2.5 shrink-0 rounded-full bg-primary shadow-[0_0_8px_rgba(126,217,87,0.6)]" />
+        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
+          <HyperlocalLogo className="size-6 shrink-0" />
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="text-[11px] font-bold tracking-wider text-muted-foreground uppercase">
-              Hello Linden
+            <p className="font-heading text-sm font-bold tracking-tight text-sidebar-foreground leading-tight">
+              Hello Hyperlocal
             </p>
-            <p className="text-sm font-semibold text-sidebar-foreground leading-tight">Admin</p>
+            <p className="text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
+              Admin Portal
+            </p>
           </div>
         </div>
       </SidebarHeader>

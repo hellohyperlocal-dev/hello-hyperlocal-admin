@@ -13,7 +13,7 @@ export function AppHeader() {
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
       <div className="flex items-center gap-2">
         <SidebarTrigger />
-        <span className="text-sm font-medium text-foreground">{current?.label ?? "Hello Linden"}</span>
+        <span className="text-sm font-medium text-foreground">{current?.label ?? "Hello Hyperlocal"}</span>
       </div>
       <ModeToggle />
     </header>
