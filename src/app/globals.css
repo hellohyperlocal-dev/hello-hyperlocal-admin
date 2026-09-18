@@ -199,10 +199,16 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    font-family: var(--font-sans);
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-heading {
+    font-family: var(--font-heading) !important;
   }
 
   code,
