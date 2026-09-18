@@ -52,3 +52,49 @@ export async function resolveReport(id: string, resolution: "resolved" | "dismis
   revalidatePath("/moderation");
   return {};
 }
+
+export async function createCommunityPost(formData: FormData): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const title = String(formData.get("title") || "").trim();
+  const category = String(formData.get("category") || "hood").trim();
+  const content = String(formData.get("content") || "").trim();
+  const imageUrl = String(formData.get("imageUrl") || "").trim() || null;
+
+  if (!title || !content) {
+    return { error: "Title and content are required." };
+  }
+
+  const validCategories = ["event", "hood", "lost-found", "job", "recommendation", "business"];
+  if (!validCategories.includes(category)) {
+    return { error: "Invalid post category." };
+  }
+
+  const supabaseAdmin = createAdminClient();
+  const { data, error } = await supabaseAdmin
+    .from("community_posts")
+    .insert({
+      author_id: admin.id,
+      title,
+      category,
+      content,
+      image_url: imageUrl,
+      is_pre_approved: true,
+      moderation_status: "approved",
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return { error: error?.message || "Failed to create community post." };
+  }
+
+  await logActivity(admin.id, "community_post.created", "community_posts", data.id, {
+    title,
+    category,
+  });
+
+  revalidatePath("/moderation");
+  return {};
+}

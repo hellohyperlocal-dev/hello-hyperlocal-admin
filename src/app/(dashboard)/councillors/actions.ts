@@ -127,3 +127,59 @@ export async function revokeInvite(inviteId: string): Promise<{ error?: string }
   revalidatePath("/councillors");
   return {};
 }
+
+export async function createCouncillorAccount(formData: FormData): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const name = String(formData.get("name") || "").trim();
+  const ward = String(formData.get("ward") || "").trim();
+  const email = String(formData.get("email") || "").trim();
+  const password = String(formData.get("password") || "").trim();
+  const phoneNumber = String(formData.get("phoneNumber") || "").trim();
+
+  if (!name || !ward || !email || !password) {
+    return { error: "Name, ward, email, and password are required." };
+  }
+
+  if (password.length < 6) {
+    return { error: "Password must be at least 6 characters." };
+  }
+
+  const supabaseAdmin = createAdminClient();
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: name },
+  });
+
+  if (authError || !authData.user) {
+    return { error: authError?.message || "Failed to create councillor account." };
+  }
+
+  const councillorId = authData.user.id;
+
+  const { error: profileError } = await supabaseAdmin.from("profiles").upsert({
+    id: councillorId,
+    role: "councillor",
+    full_name: name,
+    ward,
+    phone_number: phoneNumber || null,
+  });
+
+  if (profileError) {
+    await supabaseAdmin.auth.admin.deleteUser(councillorId);
+    return { error: profileError.message };
+  }
+
+  await logActivity(admin.id, "councillor.created", "profiles", councillorId, {
+    email,
+    name,
+    ward,
+  });
+
+  revalidatePath("/councillors");
+  return {};
+}

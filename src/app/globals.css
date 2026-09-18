@@ -49,6 +49,8 @@
   --primary-pale: #e2f6d5;
   --primary-active: #cdffad;
   --sidebar-primary: #7ed957;
+  --dark-spruce: #1c472a;
+  --dark-spruce-foreground: #ffffff;
 
   /* Not part of stock shadcn — kept because a few components use them for
      real semantic meaning (success/warning/error states). Plain
@@ -110,6 +112,8 @@
   --primary-pale: #2a3a20;
   --primary-active: #3d5a2c;
   --sidebar-primary: #7ed957;
+  --dark-spruce: #1c472a;
+  --dark-spruce-foreground: #ffffff;
 
   /* Not part of stock shadcn — kept because a few components use them for
      real semantic meaning (success/warning/error states). Plain
@@ -169,6 +173,8 @@
   --color-negative-deep: var(--negative-deep);
   --color-primary-pale: var(--primary-pale);
   --color-primary-active: var(--primary-active);
+  --color-dark-spruce: var(--dark-spruce);
+  --color-dark-spruce-foreground: var(--dark-spruce-foreground);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);

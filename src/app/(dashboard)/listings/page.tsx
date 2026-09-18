@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UnpublishButton } from "./unpublish-button";
+import { CreateListingDialog } from "./create-listing-dialog";
 
 const SAMPLE_BUSINESSES: BusinessRow[] = [
   { id: "sample-1", name: "Corner Cafe", category: "Food", address: "12 4th Ave", is_open: true, rating: 4.5, review_count: 12, created_at: new Date().toISOString() },
@@ -18,9 +19,12 @@ export default async function ListingsPage() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground">Businesses &amp; Listings</h1>
-        <p className="text-sm text-muted-foreground">Oversight of local businesses, marketplace, and Love Local.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">Businesses &amp; Listings</h1>
+          <p className="text-sm text-muted-foreground">Oversight and management of local businesses, marketplace, and Love Local.</p>
+        </div>
+        <CreateListingDialog />
       </div>
 
       <Tabs defaultValue="businesses">

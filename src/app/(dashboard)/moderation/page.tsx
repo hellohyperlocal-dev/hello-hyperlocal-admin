@@ -3,6 +3,7 @@ import { isPreviewMode } from "@/lib/preview-mode";
 import { InboxShell } from "@/components/inbox/inbox-shell";
 import { InboxDetailShell } from "@/components/inbox/inbox-detail-shell";
 import { ContentActions, ReportActions } from "./moderation-actions";
+import { CreatePostDialog } from "./create-post-dialog";
 import type { InboxItem, InboxItemInput } from "@/components/inbox/types";
 
 const SAMPLE_ITEMS: InboxItemInput[] = [
@@ -73,12 +74,14 @@ export default async function ModerationPage() {
 
 function PageHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-foreground">Moderation</h1>
-      <p className="text-sm text-muted-foreground">
-        Pending content and open reports. Marketplace and Love Local stay empty until those forms are wired to
-        Supabase in the mobile app.
-      </p>
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Moderation</h1>
+        <p className="text-sm text-muted-foreground">
+          Pending content and open reports. Direct posts published here go live immediately.
+        </p>
+      </div>
+      <CreatePostDialog />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { UserFilters } from "./filters";
 import { UserActions } from "./user-actions";
+import { AddUserDialog } from "./add-user-dialog";
 
 const SAMPLE_USERS = [
   {
@@ -51,9 +52,12 @@ export default async function UsersPage({ searchParams }: Props) {
 
 function PageHeader() {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-foreground">Users</h1>
-      <p className="text-sm text-muted-foreground">Residents, businesses, and councillors.</p>
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Users</h1>
+        <p className="text-sm text-muted-foreground">Residents, businesses, and councillors.</p>
+      </div>
+      <AddUserDialog />
     </div>
   );
 }
