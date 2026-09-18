@@ -5,7 +5,16 @@ import { toast } from "sonner";
 import { approveContent, rejectContent, resolveReport } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import type { ModerationTable } from "@/lib/moderation";
 
 export function ContentActions({ table, id }: { table: ModerationTable; id: string }) {
@@ -17,7 +26,7 @@ export function ContentActions({ table, id }: { table: ModerationTable; id: stri
     startTransition(async () => {
       const result = await approveContent(table, id);
       if (result.error) toast.error(result.error);
-      else toast.success("Approved.");
+      else toast.success("Content approved and visible on mobile feeds.");
     });
   }
 
@@ -28,7 +37,7 @@ export function ContentActions({ table, id }: { table: ModerationTable; id: stri
         toast.error(result.error);
         return;
       }
-      toast.success("Rejected.");
+      toast.success("Content rejected and hidden from feeds.");
       setRejectOpen(false);
       setReason("");
     });
@@ -36,29 +45,39 @@ export function ContentActions({ table, id }: { table: ModerationTable; id: stri
 
   return (
     <>
-      <Button onClick={handleApprove} disabled={pending}>
+      <Button onClick={handleApprove} disabled={pending} className="bg-primary text-primary-foreground hover:bg-primary/90">
         Approve
       </Button>
       <Button variant="destructive" onClick={() => setRejectOpen(true)} disabled={pending}>
         Reject
       </Button>
-      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject content</DialogTitle>
-          </DialogHeader>
+      <AlertDialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject this content?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the item from mobile community feeds. Please provide a reason to assist with moderation records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <Textarea
-            placeholder="Reason for rejection…"
+            placeholder="Reason for rejection (e.g. offensive language, spam, prohibited item)…"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            className="my-2"
           />
-          <DialogFooter>
-            <Button onClick={handleReject} disabled={pending || !reason.trim()} variant="destructive">
-              {pending ? "Rejecting…" : "Confirm reject"}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={pending || !reason.trim()}
+            >
+              {pending ? "Rejecting…" : "Confirm rejection"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

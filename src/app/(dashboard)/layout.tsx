@@ -3,9 +3,11 @@ import { isPreviewMode } from "@/lib/preview-mode";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/app-header";
+import { getAdminAlerts } from "@/lib/alerts";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
+  const { alerts, count } = await getAdminAlerts();
 
   return (
     <div className="flex min-h-screen flex-col bg-secondary">
@@ -20,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           adminAvatarUrl={admin.avatar_url}
         />
         <SidebarInset className="min-w-0">
-          <AppHeader />
+          <AppHeader alerts={alerts} alertCount={count} />
           <main className="min-w-0 flex-1 p-8">{children}</main>
         </SidebarInset>
       </SidebarProvider>

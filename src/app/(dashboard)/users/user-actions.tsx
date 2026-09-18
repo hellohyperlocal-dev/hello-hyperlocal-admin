@@ -5,7 +5,16 @@ import { toast } from "sonner";
 import { suspendUser, unsuspendUser } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 export function UserActions({ id, isSuspended }: { id: string; isSuspended: boolean }) {
   const [pending, startTransition] = useTransition();
@@ -19,7 +28,7 @@ export function UserActions({ id, isSuspended }: { id: string; isSuspended: bool
         toast.error(result.error);
         return;
       }
-      toast.success("User suspended.");
+      toast.success("User account suspended. Access has been revoked.");
       setOpen(false);
       setReason("");
     });
@@ -29,14 +38,14 @@ export function UserActions({ id, isSuspended }: { id: string; isSuspended: bool
     startTransition(async () => {
       const result = await unsuspendUser(id);
       if (result.error) toast.error(result.error);
-      else toast.success("User unsuspended.");
+      else toast.success("User unsuspended. Access restored.");
     });
   }
 
   if (isSuspended) {
     return (
       <Button size="sm" variant="outline" onClick={handleUnsuspend} disabled={pending}>
-        {pending ? "Please wait…" : "Unsuspend"}
+        {pending ? "Please wait…" : "Unsuspend account"}
       </Button>
     );
   }
@@ -46,19 +55,33 @@ export function UserActions({ id, isSuspended }: { id: string; isSuspended: bool
       <Button size="sm" variant="destructive" onClick={() => setOpen(true)} disabled={pending}>
         Suspend
       </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Suspend user</DialogTitle>
-          </DialogHeader>
-          <Textarea placeholder="Reason for suspension…" value={reason} onChange={(e) => setReason(e.target.value)} />
-          <DialogFooter>
-            <Button variant="destructive" onClick={handleSuspend} disabled={pending || !reason.trim()}>
-              {pending ? "Suspending…" : "Confirm suspend"}
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Suspending this user will immediately revoke their ability to post, comment, or transact in the mobile app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            placeholder="Reason for suspension (required for audit log)…"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            rows={3}
+            className="my-2"
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleSuspend}
+              disabled={pending || !reason.trim()}
+            >
+              {pending ? "Suspending…" : "Confirm suspension"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
