@@ -15,7 +15,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
       <SidebarProvider className="flex-1">
-        <AppSidebar adminName={admin.full_name || "Admin"} />
+        <AppSidebar
+          adminName={admin.full_name || "Admin"}
+          adminAvatarUrl={admin.avatar_url}
+        />
         <SidebarInset className="min-w-0">
           <AppHeader />
           <main className="min-w-0 flex-1 p-8">{children}</main>

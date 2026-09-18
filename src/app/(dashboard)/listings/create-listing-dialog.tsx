@@ -26,25 +26,34 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileUploader } from "@/components/media/file-uploader";
 
 const BUSINESS_CATEGORIES = [
-  "Restaurants",
-  "Coffee Shops",
-  "Retail",
-  "Guesthouses",
-  "Markets",
-  "Experiences",
+  "Dining & Cafes",
+  "Health & Wellness",
+  "Home & Garden",
+  "Professional Services",
+  "Retail & Shopping",
+  "Automotive",
+  "Pet Care",
+  "Arts & Education",
 ];
 
 export function CreateListingDialog() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("business");
-  const [businessCategory, setBusinessCategory] = useState("Restaurants");
+  const [businessCategory, setBusinessCategory] = useState(BUSINESS_CATEGORIES[0]);
   const [marketplaceCategory, setMarketplaceCategory] = useState("for-sale");
-  const [offerCategory, setOfferCategory] = useState("Restaurants");
+  const [offerCategory, setOfferCategory] = useState(BUSINESS_CATEGORIES[0]);
   const [isSpecial, setIsSpecial] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Uploaded image state per tab
+  const [bizImageUrl, setBizImageUrl] = useState<string>("");
+  const [mpImageUrl, setMpImageUrl] = useState<string>("");
+  const [offerImageUrl, setOfferImageUrl] = useState<string>("");
+
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleCreateBusiness(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -52,6 +61,7 @@ export function CreateListingDialog() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("category", businessCategory);
+    if (bizImageUrl) formData.set("imageUrl", bizImageUrl);
 
     startTransition(async () => {
       const result = await createBusiness(formData);
@@ -62,6 +72,7 @@ export function CreateListingDialog() {
       }
       toast.success("Business added to directory.");
       setOpen(false);
+      setBizImageUrl("");
       form.reset();
     });
   }
@@ -72,6 +83,7 @@ export function CreateListingDialog() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("category", marketplaceCategory);
+    if (mpImageUrl) formData.set("imageUrl", mpImageUrl);
 
     startTransition(async () => {
       const result = await createMarketplaceListing(formData);
@@ -82,6 +94,7 @@ export function CreateListingDialog() {
       }
       toast.success("Marketplace listing published.");
       setOpen(false);
+      setMpImageUrl("");
       form.reset();
     });
   }
@@ -93,6 +106,7 @@ export function CreateListingDialog() {
     const formData = new FormData(form);
     formData.set("category", offerCategory);
     formData.set("isSpecial", String(isSpecial));
+    if (offerImageUrl) formData.set("imageUrl", offerImageUrl);
 
     startTransition(async () => {
       const result = await createLoveLocalOffer(formData);
@@ -103,6 +117,7 @@ export function CreateListingDialog() {
       }
       toast.success("Love Local offer published.");
       setOpen(false);
+      setOfferImageUrl("");
       form.reset();
       setIsSpecial(false);
     });
@@ -189,8 +204,17 @@ export function CreateListingDialog() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="biz-img">Image URL (optional)</Label>
-                <Input id="biz-img" name="imageUrl" placeholder="https://..." />
+                <Label>Business cover photo (optional)</Label>
+                <FileUploader
+                  folder="business-listings"
+                  maxFiles={1}
+                  maxSizeMB={10}
+                  onUploadComplete={(urls) => setBizImageUrl(urls[0] || "")}
+                  onRemove={() => setBizImageUrl("")}
+                />
+                {bizImageUrl && (
+                  <p className="text-xs text-primary font-medium">✓ Cover image ready to attach</p>
+                )}
               </div>
 
               <DialogFooter className="pt-2">
@@ -238,8 +262,17 @@ export function CreateListingDialog() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="mp-img">Image URL (optional)</Label>
-                <Input id="mp-img" name="imageUrl" placeholder="https://..." />
+                <Label>Listing photo (optional)</Label>
+                <FileUploader
+                  folder="marketplace-listings"
+                  maxFiles={1}
+                  maxSizeMB={10}
+                  onUploadComplete={(urls) => setMpImageUrl(urls[0] || "")}
+                  onRemove={() => setMpImageUrl("")}
+                />
+                {mpImageUrl && (
+                  <p className="text-xs text-primary font-medium">✓ Photo ready to publish with listing</p>
+                )}
               </div>
 
               <DialogFooter className="pt-2">
@@ -319,8 +352,17 @@ export function CreateListingDialog() {
               )}
 
               <div className="space-y-1.5">
-                <Label htmlFor="offer-img">Image URL (optional)</Label>
-                <Input id="offer-img" name="imageUrl" placeholder="https://..." />
+                <Label>Offer promo photo (optional)</Label>
+                <FileUploader
+                  folder="love-local-offers"
+                  maxFiles={1}
+                  maxSizeMB={10}
+                  onUploadComplete={(urls) => setOfferImageUrl(urls[0] || "")}
+                  onRemove={() => setOfferImageUrl("")}
+                />
+                {offerImageUrl && (
+                  <p className="text-xs text-primary font-medium">✓ Promo photo ready to publish with offer</p>
+                )}
               </div>
 
               <DialogFooter className="pt-2">

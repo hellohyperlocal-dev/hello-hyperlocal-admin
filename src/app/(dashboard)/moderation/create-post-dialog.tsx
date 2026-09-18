@@ -25,12 +25,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileUploader } from "@/components/media/file-uploader";
 
 export function CreatePostDialog() {
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState("hood");
-  const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState<string>("hood");
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,6 +40,9 @@ export function CreatePostDialog() {
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("category", category);
+    if (uploadedImageUrl) {
+      formData.set("imageUrl", uploadedImageUrl);
+    }
 
     startTransition(async () => {
       const result = await createCommunityPost(formData);
@@ -46,10 +51,11 @@ export function CreatePostDialog() {
         toast.error(result.error);
         return;
       }
-
-      toast.success("Community post published to mobile feed.");
+      toast.success("Community post published.");
       setOpen(false);
+      setUploadedImageUrl("");
       form.reset();
+      setCategory("hood");
     });
   }
 
@@ -109,8 +115,17 @@ export function CreatePostDialog() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="post-image">Image URL (optional)</Label>
-            <Input id="post-image" name="imageUrl" placeholder="https://..." />
+            <Label>Post photo (optional)</Label>
+            <FileUploader
+              folder="community-posts"
+              maxFiles={1}
+              maxSizeMB={10}
+              onUploadComplete={(urls) => setUploadedImageUrl(urls[0] || "")}
+              onRemove={() => setUploadedImageUrl("")}
+            />
+            {uploadedImageUrl && (
+              <p className="text-xs text-primary font-medium">✓ Image ready to publish with post</p>
+            )}
           </div>
 
           <DialogFooter className="pt-2">

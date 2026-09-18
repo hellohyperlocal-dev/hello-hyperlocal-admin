@@ -14,16 +14,25 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { SignOutButton } from "@/components/sign-out-button";
 import { NAV_GROUPS } from "@/lib/nav-config";
 import { isPreviewMode } from "@/lib/preview-mode";
 
 interface Props {
   adminName: string;
+  adminAvatarUrl?: string | null;
 }
 
-export function AppSidebar({ adminName }: Props) {
+export function AppSidebar({ adminName, adminAvatarUrl }: Props) {
   const pathname = usePathname();
+
+  const initials = adminName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "HL";
 
   return (
     <Sidebar collapsible="icon">
@@ -75,9 +84,23 @@ export function AppSidebar({ adminName }: Props) {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="gap-2 border-t border-sidebar-border/60 px-3 py-3 group-data-[collapsible=icon]:hidden">
-        <p className="truncate text-xs text-muted-foreground">{adminName}</p>
-        {!isPreviewMode && <SignOutButton />}
+      <SidebarFooter className="gap-3 border-t border-sidebar-border/60 px-3 py-3 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-2">
+        <div className="flex items-center gap-2.5 group-data-[collapsible=icon]:justify-center">
+          <Avatar size="sm" className="border border-border/60">
+            {adminAvatarUrl && <AvatarImage src={adminAvatarUrl} alt={adminName} />}
+            <AvatarFallback className="text-[11px] font-semibold bg-[#1C472A] text-white">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden">
+            <p className="truncate text-xs font-medium text-sidebar-foreground">{adminName}</p>
+          </div>
+        </div>
+        {!isPreviewMode && (
+          <div className="group-data-[collapsible=icon]:hidden">
+            <SignOutButton />
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

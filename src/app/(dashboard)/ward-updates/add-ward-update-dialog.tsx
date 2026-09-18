@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileUploader } from "@/components/media/file-uploader";
 
 interface CouncillorOption {
   id: string;
@@ -39,10 +40,11 @@ interface Props {
 export function AddWardUpdateDialog({ councillors }: Props) {
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("notice");
-  const [councillorId, setCouncillorId] = useState(councillors[0]?.id || "");
+  const [councillorId, setCouncillorId] = useState<string>("");
   const [isPinned, setIsPinned] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
   const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,8 +52,9 @@ export function AddWardUpdateDialog({ councillors }: Props) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("category", category);
-    if (councillorId) formData.set("councillorId", councillorId);
     formData.set("isPinned", String(isPinned));
+    if (councillorId) formData.set("councillorId", councillorId);
+    if (uploadedImageUrl) formData.set("imageUrl", uploadedImageUrl);
 
     startTransition(async () => {
       const result = await createWardUpdate(formData);
@@ -61,10 +64,12 @@ export function AddWardUpdateDialog({ councillors }: Props) {
         return;
       }
 
-      toast.success("Ward update broadcasted successfully.");
+      toast.success("Ward update published.");
       setOpen(false);
+      setUploadedImageUrl("");
       form.reset();
       setIsPinned(false);
+      setCouncillorId("");
     });
   }
 
@@ -148,8 +153,17 @@ export function AddWardUpdateDialog({ councillors }: Props) {
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="imageUrl">Photo URL (optional)</Label>
-            <Input id="imageUrl" name="imageUrl" placeholder="https://..." />
+            <Label>Update photo (optional)</Label>
+            <FileUploader
+              folder="ward-updates"
+              maxFiles={1}
+              maxSizeMB={10}
+              onUploadComplete={(urls) => setUploadedImageUrl(urls[0] || "")}
+              onRemove={() => setUploadedImageUrl("")}
+            />
+            {uploadedImageUrl && (
+              <p className="text-xs text-primary font-medium">✓ Photo ready to publish with update</p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 pt-1">

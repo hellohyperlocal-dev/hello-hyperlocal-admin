@@ -15,8 +15,8 @@ export default async function AccountPage() {
         <p className="text-sm text-muted-foreground">Your own admin account settings.</p>
       </div>
 
-      <SettingsSection title="Personal Information" description="Manage your name as shown across the dashboard.">
-        <AccountForm initialName={admin.full_name || ""} email={email} />
+      <SettingsSection title="Personal Information" description="Manage your photo and name as shown across the dashboard.">
+        <AccountForm initialName={admin.full_name || ""} initialAvatarUrl={admin.avatar_url} email={email} />
       </SettingsSection>
 
       <Separator />
