@@ -21,28 +21,50 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     const supabase = createClient();
 
-    // Supabase's recovery link signs the user into a temporary session and
-    // fires this event once the client has parsed the URL fragment. Don't
-    // render the form until that's happened — a session existing here doesn't
-    // by itself prove this is a recovery flow (could be a normal signed-in
-    // admin who navigated here directly).
+    async function checkRecovery() {
+      // 1. Check if a session already exists (e.g. redirected from /auth/callback)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session && isMounted) {
+        setStatus("ready");
+        return;
+      }
+
+      // 2. Check if a PKCE code is in query params
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!exchangeError && isMounted) {
+          setStatus("ready");
+          return;
+        }
+      }
+    }
+
+    checkRecovery();
+
+    // 3. Supabase recovery event from URL hash or internal state change
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setStatus("ready");
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        if (isMounted) setStatus("ready");
       }
     });
 
-    // If no recovery event fires shortly after mount, the link was invalid,
-    // expired, or this page was opened directly with no token at all.
     const timeout = setTimeout(() => {
-      setStatus((current) => (current === "checking" ? "expired" : current));
-    }, 3000);
+      if (isMounted) {
+        setStatus((current) => (current === "checking" ? "expired" : current));
+      }
+    }, 4000);
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
       clearTimeout(timeout);
     };
