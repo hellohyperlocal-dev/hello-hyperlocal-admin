@@ -7,17 +7,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendInviteEmail } from "@/lib/email";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { logActivity } from "@/lib/activity-log";
+import { buildInviteLink } from "@/lib/invites";
 import type { CreateInviteResult } from "../councillors/actions";
 
 const INVITE_EXPIRY_DAYS = 7;
 
 function generateToken(): string {
   return randomBytes(24).toString("hex");
-}
-
-function buildInviteLink(token: string): string {
-  const scheme = process.env.NEXT_PUBLIC_MOBILE_APP_SCHEME || "hello-hyperlocal";
-  return `${scheme}://invite/${token}`;
 }
 
 export async function createAdminInvite(formData: FormData): Promise<CreateInviteResult> {
@@ -53,7 +49,7 @@ export async function createAdminInvite(formData: FormData): Promise<CreateInvit
     return { error: error?.message || "Failed to create invite." };
   }
 
-  const inviteLink = buildInviteLink(token);
+  const inviteLink = buildInviteLink(token, "admin");
 
   await logActivity(admin.id, "invite.created", "invites", data.id, { email, name, role: "admin" });
   await sendInviteEmail({ email, name, ward: "", role: "admin", inviteLink });

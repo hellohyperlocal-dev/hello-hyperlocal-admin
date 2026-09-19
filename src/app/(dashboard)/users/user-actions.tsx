@@ -13,7 +13,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
 export function UserActions({ id, isSuspended }: { id: string; isSuspended: boolean }) {

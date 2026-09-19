@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getModerationQueue, MODERATION_CATEGORIES, type ModerationDetail, type ReportDetail } from "@/lib/moderation";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { InboxShell } from "@/components/inbox/inbox-shell";
@@ -103,7 +104,21 @@ function ContentDetailView({ item, detail }: { item: InboxItemInput; detail: Mod
           {detail.row.content || detail.row.description}
         </p>
         {detail.row.price && <p className="text-sm text-muted-foreground">Price: {detail.row.price}</p>}
-        <p className="text-xs text-muted-foreground">Category: {detail.row.category}</p>
+        <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-2 text-xs text-muted-foreground">
+          <span>
+            Author: <span className="font-medium text-foreground">{detail.authorName}</span>
+          </span>
+          {detail.row.author_id && (
+            <Link
+              href={`/users/${detail.row.author_id}`}
+              className="font-medium text-primary hover:underline"
+            >
+              (View profile)
+            </Link>
+          )}
+          <span>•</span>
+          <span>Category: {detail.row.category}</span>
+        </div>
       </div>
     </InboxDetailShell>
   );
@@ -113,7 +128,7 @@ function ReportDetailView({ item, detail }: { item: InboxItemInput; detail: Repo
   return (
     <InboxDetailShell
       title={item.title}
-      subtitle="Report"
+      subtitle={item.subtitle}
       timestamp={item.timestamp}
       actions={<ReportActions id={detail.row.id} />}
     >
@@ -122,6 +137,16 @@ function ReportDetailView({ item, detail }: { item: InboxItemInput; detail: Repo
           <span className="font-medium">Reason: </span>
           {detail.row.reason || "No reason given"}
         </p>
+        {detail.reporterName && (
+          <p className="text-xs text-muted-foreground">
+            Reported by <span className="font-medium text-foreground">{detail.reporterName}</span>
+            {detail.row.reporter_id && (
+              <Link href={`/users/${detail.row.reporter_id}`} className="ml-1 font-medium text-primary hover:underline">
+                (View profile)
+              </Link>
+            )}
+          </p>
+        )}
         {detail.row.community_posts?.content && (
           <div className="min-w-0 rounded-md border border-border p-3">
             <p className="mb-1 text-xs text-muted-foreground">Reported post content:</p>

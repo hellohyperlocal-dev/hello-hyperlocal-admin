@@ -8,15 +8,12 @@ import { sendInviteEmail } from "@/lib/email";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { logActivity } from "@/lib/activity-log";
 
+import { buildInviteLink } from "@/lib/invites";
+
 const INVITE_EXPIRY_DAYS = 7;
 
 function generateToken(): string {
   return randomBytes(24).toString("hex");
-}
-
-function buildInviteLink(token: string): string {
-  const scheme = process.env.NEXT_PUBLIC_MOBILE_APP_SCHEME || "hello-hyperlocal";
-  return `${scheme}://invite/${token}`;
 }
 
 export interface CreateInviteResult {
@@ -58,7 +55,7 @@ export async function createInvite(formData: FormData): Promise<CreateInviteResu
     return { error: error?.message || "Failed to create invite." };
   }
 
-  const inviteLink = buildInviteLink(token);
+  const inviteLink = buildInviteLink(token, "councillor");
 
   await logActivity(admin.id, "invite.created", "invites", data.id, { email, name, ward });
   await sendInviteEmail({ email, name, ward, role: "councillor", inviteLink });
@@ -94,7 +91,8 @@ export async function resendInvite(inviteId: string): Promise<CreateInviteResult
     return { error: error.message };
   }
 
-  const inviteLink = buildInviteLink(token);
+  const inviteRole = (existing.role as "councillor" | "admin") || "councillor";
+  const inviteLink = buildInviteLink(token, inviteRole);
 
   await logActivity(admin.id, "invite.resent", "invites", inviteId, { email: existing.email });
   await sendInviteEmail({

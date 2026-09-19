@@ -111,14 +111,15 @@ export function FileUploader({
 
         return next;
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
       setItems((prev) =>
         prev.map((i) =>
           i.id === item.id
             ? {
                 ...i,
                 status: "failed",
-                error: err.message || "Upload failed",
+                error: msg,
                 progress: 100,
               }
             : i
@@ -300,6 +301,7 @@ export function FileUploader({
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   {item.url && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.url}
                       alt={item.name}

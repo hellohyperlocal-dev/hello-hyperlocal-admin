@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, MessageSquarePlus } from "lucide-react";
+import { MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
 import { createCommunityPost } from "./actions";
 import { Button } from "@/components/ui/button";

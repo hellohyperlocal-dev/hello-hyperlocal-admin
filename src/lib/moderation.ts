@@ -44,6 +44,7 @@ export interface ModerationDetail {
 export interface ReportDetail {
   kind: "report";
   row: ReportRow;
+  reporterName?: string;
 }
 
 export async function getModerationQueue(): Promise<{
@@ -80,23 +81,70 @@ export async function getModerationQueue(): Promise<{
       .order("created_at", { ascending: false }),
   ]);
 
+  const rawPosts = (postsResult.data as ContentRow[]) ?? [];
+  const rawMarketplace = (marketplaceResult.data as ContentRow[]) ?? [];
+  const rawLoveLocal = (loveLocalResult.data as ContentRow[]) ?? [];
+  const rawReports = (reportsResult.data as unknown as ReportRow[]) ?? [];
+
+  // Batch lookup profiles for authors
+  const authorIds = Array.from(
+    new Set(
+      [...rawPosts, ...rawMarketplace, ...rawLoveLocal]
+        .map((r) => r.author_id)
+        .filter((id): id is string => Boolean(id))
+    )
+  );
+
+  const authorMap = new Map<string, { full_name: string | null; business_name: string | null }>();
+  if (authorIds.length > 0) {
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("id, full_name, business_name")
+      .in("id", authorIds);
+
+    for (const p of profiles ?? []) {
+      authorMap.set(p.id, p);
+    }
+  }
+
+  // Batch lookup profiles for reporters
+  const reporterIds = Array.from(
+    new Set(rawReports.map((r) => r.reporter_id).filter((id): id is string => Boolean(id)))
+  );
+  const reporterMap = new Map<string, { full_name: string | null }>();
+  if (reporterIds.length > 0) {
+    const { data: repProfiles } = await admin
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", reporterIds);
+
+    for (const p of repProfiles ?? []) {
+      reporterMap.set(p.id, p);
+    }
+  }
+
   const byId = new Map<string, ModerationDetail | ReportDetail>();
   const items: InboxItemInput[] = [];
 
-  const contentSets: [ModerationTable, ContentRow[] | null][] = [
-    ["community_posts", (postsResult.data as ContentRow[]) ?? null],
-    ["marketplace_listings", (marketplaceResult.data as ContentRow[]) ?? null],
-    ["love_local_offers", (loveLocalResult.data as ContentRow[]) ?? null],
+  const contentSets: [ModerationTable, ContentRow[]][] = [
+    ["community_posts", rawPosts],
+    ["marketplace_listings", rawMarketplace],
+    ["love_local_offers", rawLoveLocal],
   ];
 
   for (const [table, rows] of contentSets) {
-    for (const row of rows ?? []) {
-      byId.set(row.id, { kind: "content", table, row, authorName: "Author" });
+    for (const row of rows) {
+      const profile = row.author_id ? authorMap.get(row.author_id) : null;
+      const authorName =
+        profile?.business_name || profile?.full_name || (row.author_id ? "Unknown User" : "Anonymous");
+      const categoryLabel = MODERATION_CATEGORIES.find((c) => c.id === table)?.label ?? table;
+
+      byId.set(row.id, { kind: "content", table, row, authorName });
       items.push({
         id: row.id,
         categoryId: table,
         title: row.title,
-        subtitle: MODERATION_CATEGORIES.find((c) => c.id === table)?.label ?? table,
+        subtitle: `${authorName} • ${categoryLabel}`,
         preview: row.content || row.description || "",
         timestamp: row.created_at,
         isNew: true,
@@ -105,14 +153,16 @@ export async function getModerationQueue(): Promise<{
     }
   }
 
-  const reports = (reportsResult.data as unknown as ReportRow[]) ?? [];
-  for (const row of reports) {
-    byId.set(row.id, { kind: "report", row });
+  for (const row of rawReports) {
+    const reporter = reporterMap.get(row.reporter_id);
+    const reporterName = reporter?.full_name || "Resident";
+
+    byId.set(row.id, { kind: "report", row, reporterName });
     items.push({
       id: row.id,
       categoryId: "reports",
       title: row.community_posts?.title || "Reported post",
-      subtitle: "Report",
+      subtitle: `Reported by ${reporterName}`,
       preview: row.reason || "No reason given",
       timestamp: row.created_at,
       isNew: true,

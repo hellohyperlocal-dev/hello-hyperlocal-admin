@@ -35,9 +35,14 @@ export async function getUsers(opts: { role?: string; search?: string; page?: nu
     query = query.eq("role", opts.role);
   }
   if (opts.search) {
-    query = query.or(
-      `full_name.ilike.%${opts.search}%,business_name.ilike.%${opts.search}%,phone_number.ilike.%${opts.search}%`
-    );
+    // PostgREST .or() uses commas as delimiters and parentheses for logical grouping.
+    // Unsanitized commas, parentheses, or quotes break the expression syntax and cause 400 Bad Request.
+    const sanitized = opts.search.replace(/[,()"]/g, " ").replace(/\s+/g, " ").trim();
+    if (sanitized) {
+      query = query.or(
+        `full_name.ilike.%${sanitized}%,business_name.ilike.%${sanitized}%,phone_number.ilike.%${sanitized}%`
+      );
+    }
   }
 
   const { data, count, error } = await query;

@@ -1,7 +1,6 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { uploadImageToR2 } from '@/lib/r2';
-import { isPreviewMode } from '@/lib/preview-mode';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,10 +39,11 @@ export async function POST(request: NextRequest) {
       originalSize: result.originalSize,
       compressedSize: result.compressedSize,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Upload error:', err);
+    const message = err instanceof Error ? err.message : 'Failed to upload image';
     return NextResponse.json(
-      { error: err.message || 'Failed to upload image' },
+      { error: message },
       { status: 500 }
     );
   }

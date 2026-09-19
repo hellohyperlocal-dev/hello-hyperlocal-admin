@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { UploadCloudIcon, Trash2Icon, ImageIcon, Loader2Icon } from "lucide-react";
+import { UploadCloudIcon, Trash2Icon, Loader2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "cn";
 import { toast } from "sonner";
 
@@ -29,18 +28,22 @@ export function AvatarUploader({
 }: AvatarUploaderProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
   const [preview, setPreview] = React.useState<string | null>(initialUrl);
+  const [prevInitialUrl, setPrevInitialUrl] = React.useState<string | null>(initialUrl);
   const [isUploading, setIsUploading] = React.useState(false);
 
-  React.useEffect(() => {
+  if (prevInitialUrl !== initialUrl) {
+    setPrevInitialUrl(initialUrl);
     setPreview(initialUrl);
-  }, [initialUrl]);
+  }
 
-  const initials = nameFallback
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase() || "HL";
+  const initials =
+    nameFallback
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "HL";
+
 
   const handleSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,8 +84,9 @@ export function AvatarUploader({
       setPreview(data.url);
       onUploaded(data.url);
       toast.success("Avatar uploaded and compressed!");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to upload avatar");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to upload avatar";
+      toast.error(msg);
       setPreview(initialUrl);
     } finally {
       setIsUploading(false);
@@ -112,10 +116,11 @@ export function AvatarUploader({
               <Loader2Icon className="size-6 animate-spin" />
             </div>
           ) : preview ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="Avatar" className="size-full object-cover" />
           ) : (
-            <div className="flex flex-col items-center justify-center text-muted-foreground group-hover:text-primary">
-              <ImageIcon className="size-6" />
+            <div className="flex flex-col items-center justify-center text-sm font-semibold text-muted-foreground group-hover:text-primary">
+              {initials}
             </div>
           )}
         </div>

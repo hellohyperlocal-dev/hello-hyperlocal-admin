@@ -16,7 +16,7 @@ export async function updateOwnProfile({
   const admin = await requireAdmin();
   if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
 
-  const updates: Record<string, any> = {};
+  const updates: Record<string, unknown> = {};
   if (fullName !== undefined) {
     if (!fullName.trim()) return { error: "Name can't be empty." };
     updates.full_name = fullName.trim();
