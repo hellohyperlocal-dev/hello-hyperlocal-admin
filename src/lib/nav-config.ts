@@ -9,6 +9,7 @@ import {
   Store,
   Megaphone,
   Settings,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -50,8 +51,11 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    title: "Settings",
-    items: [{ href: "/account", label: "Account", icon: Settings }],
+    title: "Settings & System",
+    items: [
+      { href: "/email-templates", label: "Email Templates", icon: Mail },
+      { href: "/account", label: "Account", icon: Settings },
+    ],
   },
 ];
 

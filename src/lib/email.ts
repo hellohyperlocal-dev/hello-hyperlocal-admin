@@ -14,6 +14,8 @@ interface OtpEmailPayload {
   code: string;
 }
 
+import { EMAIL_TEMPLATES } from "./email-templates/templates";
+
 // hellohyperlocal.co.za is verified in Resend — send from it, not the sandbox default.
 const FROM_ADDRESS = "Hello Linden <noreply@hellohyperlocal.co.za>";
 
@@ -40,16 +42,32 @@ export async function sendInviteEmail(payload: InviteEmailPayload): Promise<void
     return;
   }
 
+  const templateId = payload.role === "admin" ? "admin-invite" : "councillor-invite";
+  const template = EMAIL_TEMPLATES.find((t) => t.id === templateId);
+
+  const vars: Record<string, string> =
+    payload.role === "admin"
+      ? {
+          name: payload.name,
+          inviterName: "Hello Linden Administration",
+          inviteUrl: payload.inviteLink,
+        }
+      : {
+          name: payload.name,
+          ward: payload.ward || "Linden",
+          inviteUrl: payload.inviteLink,
+        };
+
+  const subject = template?.defaultSubject ?? `You've been invited to Hello Linden`;
+  const html = template ? template.renderHtml(vars) : `<p>Hi ${payload.name},</p><p><a href="${payload.inviteLink}">Accept invite</a></p>`;
+  const text = template ? template.renderPlainText(vars) : `Accept invite: ${payload.inviteLink}`;
+
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to: payload.email,
-    subject: `You've been invited to Hello Linden`,
-    html: `
-      <p>Hi ${payload.name},</p>
-      <p>You've been invited as a ${payload.role}${payload.role === "councillor" ? ` for ${payload.ward}` : ""} on Hello Linden.</p>
-      <p><a href="${payload.inviteLink}">Accept your invite</a></p>
-      <p>This link expires in 7 days.</p>
-    `,
+    subject,
+    html,
+    text,
   });
 
   if (error) {
@@ -72,15 +90,27 @@ export async function sendOtpEmail(payload: OtpEmailPayload): Promise<void> {
     return;
   }
 
+  const template = EMAIL_TEMPLATES.find((t) => t.id === "login-otp");
+  const vars = {
+    name: "Admin",
+    code: payload.code,
+    expiryMinutes: "10",
+  };
+
+  const subject = template?.defaultSubject ?? "Your Hello Linden admin verification code";
+  const html = template
+    ? template.renderHtml(vars)
+    : `<p>Your code is: ${payload.code}</p>`;
+  const text = template
+    ? template.renderPlainText(vars)
+    : `Your Hello Linden admin verification code is: ${payload.code} (expires in 10 minutes).`;
+
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to: payload.email,
-    subject: `Your Hello Linden admin verification code`,
-    html: `
-      <p>Your one-time verification code is:</p>
-      <p style="font-size: 28px; font-weight: 700; letter-spacing: 4px;">${payload.code}</p>
-      <p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>
-    `,
+    subject,
+    html,
+    text,
   });
 
   if (error) {
