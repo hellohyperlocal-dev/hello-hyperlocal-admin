@@ -128,9 +128,9 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  --font-heading: var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -198,16 +198,24 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  body,
+  html {
     @apply bg-background text-foreground font-sans;
     font-family: var(--font-sans);
   }
-  html {
-    font-family: var(--font-sans);
-  }
 
-  h1, h2, h3, h4, h5, h6,
-  .font-heading {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading,
+  [data-slot="card-title"],
+  [data-slot="card-header"] h2,
+  [data-slot="card-header"] h3,
+  [data-slot="dialog-title"],
+  [data-slot="alert-dialog-title"] {
     font-family: var(--font-heading) !important;
   }
 
