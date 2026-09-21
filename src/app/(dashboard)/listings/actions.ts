@@ -5,6 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logActivity } from "@/lib/activity-log";
 import { isPreviewMode } from "@/lib/preview-mode";
+import { BUSINESS_CATEGORIES } from "@/lib/listings";
 
 type ListingTable = "marketplace_listings" | "love_local_offers";
 
@@ -26,7 +27,7 @@ export async function createBusiness(formData: FormData): Promise<{ error?: stri
   if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
 
   const name = String(formData.get("name") || "").trim();
-  const category = String(formData.get("category") || "Restaurants").trim();
+  const category = String(formData.get("category") || BUSINESS_CATEGORIES[0]).trim();
   const address = String(formData.get("address") || "").trim() || null;
   const description = String(formData.get("description") || "").trim() || null;
   const hours = String(formData.get("hours") || "").trim() || null;
@@ -36,8 +37,7 @@ export async function createBusiness(formData: FormData): Promise<{ error?: stri
 
   if (!name) return { error: "Business name is required." };
 
-  const validCategories = ["Restaurants", "Coffee Shops", "Retail", "Guesthouses", "Markets", "Experiences"];
-  if (!validCategories.includes(category)) {
+  if (!(BUSINESS_CATEGORIES as readonly string[]).includes(category)) {
     return { error: "Invalid business category." };
   }
 
@@ -109,7 +109,7 @@ export async function createLoveLocalOffer(formData: FormData): Promise<{ error?
   if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
 
   const title = String(formData.get("title") || "").trim();
-  const category = String(formData.get("category") || "Restaurants").trim();
+  const category = String(formData.get("category") || BUSINESS_CATEGORIES[0]).trim();
   const price = String(formData.get("price") || "").trim();
   const description = String(formData.get("description") || "").trim() || null;
   const isSpecial = formData.get("isSpecial") === "true";

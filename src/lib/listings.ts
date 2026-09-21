@@ -1,24 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { BusinessRow, ListingRow } from "./listings-types";
 
-export interface BusinessRow {
-  id: string;
-  name: string;
-  category: string;
-  address: string | null;
-  is_open: boolean;
-  rating: number;
-  review_count: number;
-  created_at: string;
-}
-
-export interface ListingRow {
-  id: string;
-  title: string;
-  category: string;
-  price: string;
-  moderation_status: string;
-  created_at: string;
-}
+export * from "./listings-types";
 
 export async function getBusinesses(): Promise<BusinessRow[]> {
   const admin = createAdminClient();

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Plus, Store, ShoppingBag, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { createBusiness, createMarketplaceListing, createLoveLocalOffer } from "./actions";
+import { BUSINESS_CATEGORIES } from "@/lib/listings-types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,23 +29,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileUploader } from "@/components/media/file-uploader";
 
-const BUSINESS_CATEGORIES = [
-  "Dining & Cafes",
-  "Health & Wellness",
-  "Home & Garden",
-  "Professional Services",
-  "Retail & Shopping",
-  "Automotive",
-  "Pet Care",
-  "Arts & Education",
-];
-
 export function CreateListingDialog() {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("business");
-  const [businessCategory, setBusinessCategory] = useState(BUSINESS_CATEGORIES[0]);
+  const [businessCategory, setBusinessCategory] = useState<string>(BUSINESS_CATEGORIES[0]);
   const [marketplaceCategory, setMarketplaceCategory] = useState("for-sale");
-  const [offerCategory, setOfferCategory] = useState(BUSINESS_CATEGORIES[0]);
+  const [offerCategory, setOfferCategory] = useState<string>(BUSINESS_CATEGORIES[0]);
   const [isSpecial, setIsSpecial] = useState(false);
 
   // Uploaded image state per tab
