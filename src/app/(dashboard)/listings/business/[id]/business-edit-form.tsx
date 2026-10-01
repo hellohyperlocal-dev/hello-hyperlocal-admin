@@ -138,273 +138,290 @@ export function BusinessEditForm({ business }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content (2 Cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Core Information</CardTitle>
-              <CardDescription>
-                Essential business profile displayed across the Hello Linden mobile app.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Business Name *</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Corner Bakery"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Business Category *</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger id="category" className="w-full">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BUSINESS_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
+      <div className="space-y-6 max-w-3xl">
+        {/* 1. Core Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Core Information</CardTitle>
+            <CardDescription>
+              Essential business profile displayed across the Hello Linden mobile app.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="description">About / Description</Label>
-                <Textarea
-                  id="description"
-                  rows={4}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe the business, offerings, ambiance, or neighborhood specialties..."
+                <Label htmlFor="name">Business Name *</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Corner Bakery"
+                  required
                 />
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Location &amp; Operating Hours</CardTitle>
-              <CardDescription>
-                Physical storefront coordinates and opening times for resident navigation.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="address">Physical Street Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 size-4 text-muted-foreground" />
-                  <Input
-                    id="address"
-                    className="pl-9"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="e.g. 44 4th Avenue, Linden, Randburg"
-                  />
-                </div>
-              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="hours">Operating Hours</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-3 size-4 text-muted-foreground" />
-                  <Input
-                    id="hours"
-                    className="pl-9"
-                    value={hours}
-                    onChange={(e) => setHours(e.target.value)}
-                    placeholder="e.g. Mon–Fri 7am–5pm, Sat 8am–2pm"
-                  />
-                </div>
+                <Label htmlFor="category">Business Category *</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger id="category" className="w-full">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUSINESS_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div className="space-y-2">
-                  <Label htmlFor="latitude">Latitude (GPS)</Label>
-                  <Input
-                    id="latitude"
-                    type="number"
-                    step="any"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    placeholder="-26.1417"
+            <div className="space-y-2">
+              <Label htmlFor="description">About / Description</Label>
+              <Textarea
+                id="description"
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe the business, offerings, ambiance, or neighborhood specialties..."
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 2. Cover Photo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Cover Photo</CardTitle>
+            <CardDescription>
+              High-resolution storefront or logo image. Stored on Cloudflare R2 with zero egress fees.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {imageUrl ? (
+              <div className="space-y-3">
+                <div className="relative aspect-video max-w-lg w-full rounded-xl overflow-hidden border border-border">
+                  <Image
+                    src={imageUrl}
+                    alt={name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 600px"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="longitude">Longitude (GPS)</Label>
-                  <Input
-                    id="longitude"
-                    type="number"
-                    step="any"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    placeholder="27.9971"
-                  />
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => setImageUrl("")}
+                >
+                  <Trash2 className="size-4 mr-1.5" />
+                  Remove / Replace Photo
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            ) : (
+              <FileUploader
+                folder="business-listings"
+                maxFiles={1}
+                maxSizeMB={10}
+                onUploadComplete={(urls) => {
+                  if (urls[0]) {
+                    setImageUrl(urls[0]);
+                    toast.success("Cover image uploaded.");
+                  }
+                }}
+                onRemove={() => setImageUrl("")}
+              />
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Sidebar Controls (1 Col) */}
-        <div className="space-y-6">
-          {/* Cover Photo */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Cover Photo</CardTitle>
-              <CardDescription>
-                High-resolution storefront or logo image. Stored on Cloudflare R2.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {imageUrl ? (
-                <div className="space-y-3">
-                  <div className="relative aspect-video w-full rounded-lg overflow-hidden border">
-                    <Image
-                      src={imageUrl}
-                      alt={name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 350px"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full text-destructive hover:bg-destructive/10"
-                    onClick={() => setImageUrl("")}
-                  >
-                    Remove Photo
-                  </Button>
-                </div>
-              ) : (
-                <FileUploader
-                  folder="business-listings"
-                  maxFiles={1}
-                  maxSizeMB={10}
-                  onUploadComplete={(urls) => {
-                    if (urls[0]) {
-                      setImageUrl(urls[0]);
-                      toast.success("Cover image uploaded.");
-                    }
-                  }}
-                  onRemove={() => setImageUrl("")}
+        {/* 3. Location & Operating Hours */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Location &amp; Operating Hours</CardTitle>
+            <CardDescription>
+              Physical storefront coordinates and opening times for resident navigation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="address">Physical Street Address</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 size-4 text-muted-foreground" />
+                <Input
+                  id="address"
+                  className="pl-9"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="e.g. 44 4th Avenue, Linden, Randburg"
                 />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Visibility & Ratings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Status &amp; Ratings</CardTitle>
-              <CardDescription>
-                Operating status and seeded ratings in the directory.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Open for Business</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Displays an &quot;Open Now&quot; badge on mobile.
-                  </p>
-                </div>
-                <Switch checked={isOpen} onCheckedChange={setIsOpen} />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-2">
-                  <Label htmlFor="rating">Rating (0-5)</Label>
-                  <div className="relative">
-                    <Star className="absolute left-3 top-3 size-3.5 text-amber-500 fill-amber-500" />
-                    <Input
-                      id="rating"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="5"
-                      className="pl-8"
-                      value={rating}
-                      onChange={(e) => setRating(e.target.value)}
-                    />
-                  </div>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="hours">Operating Hours</Label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-3 size-4 text-muted-foreground" />
+                <Input
+                  id="hours"
+                  className="pl-9"
+                  value={hours}
+                  onChange={(e) => setHours(e.target.value)}
+                  placeholder="e.g. Mon–Fri 7am–5pm, Sat 8am–2pm"
+                />
+              </div>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reviewCount">Review Count</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude (GPS)</Label>
+                <Input
+                  id="latitude"
+                  type="number"
+                  step="any"
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                  placeholder="-26.1417"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude (GPS)</Label>
+                <Input
+                  id="longitude"
+                  type="number"
+                  step="any"
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                  placeholder="27.9971"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. Status & Ratings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Status &amp; Ratings</CardTitle>
+            <CardDescription>
+              Operating status and seeded ratings in the directory.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Open for Business</Label>
+                <p className="text-xs text-muted-foreground">
+                  Displays an &quot;Open Now&quot; badge on mobile.
+                </p>
+              </div>
+              <Switch checked={isOpen} onCheckedChange={setIsOpen} />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="space-y-2">
+                <Label htmlFor="rating">Rating (0-5)</Label>
+                <div className="relative">
+                  <Star className="absolute left-3 top-3 size-3.5 text-amber-500 fill-amber-500" />
                   <Input
-                    id="reviewCount"
+                    id="rating"
                     type="number"
+                    step="0.1"
                     min="0"
-                    value={reviewCount}
-                    onChange={(e) => setReviewCount(e.target.value)}
+                    max="5"
+                    className="pl-8"
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Danger Zone */}
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardHeader>
-              <CardTitle className="text-base text-destructive flex items-center gap-1.5">
-                <AlertTriangle className="size-4" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Permanent deletion removes this business from search results and feeds.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="w-full"
-                    disabled={deletePending || pending}
+              <div className="space-y-2">
+                <Label htmlFor="reviewCount">Review Count</Label>
+                <Input
+                  id="reviewCount"
+                  type="number"
+                  min="0"
+                  value={reviewCount}
+                  onChange={(e) => setReviewCount(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Danger Zone */}
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="text-base text-destructive flex items-center gap-1.5">
+              <AlertTriangle className="size-4" />
+              Danger Zone
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Permanent deletion removes this business listing and all associated data from Hello Linden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  disabled={deletePending || pending}
+                >
+                  <Trash2 className="size-4 mr-1.5" />
+                  Delete this Business
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="w-[95vw] sm:max-w-md">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete &quot;{business.name}&quot;?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action will permanently delete this business listing and its
+                    metadata from the Hello Linden database. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    disabled={deletePending}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete();
+                    }}
                   >
-                    <Trash2 className="size-4 mr-1.5" />
-                    Delete this Business
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="w-[95vw] sm:max-w-md">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Delete &quot;{business.name}&quot;?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action will permanently delete this business listing and its
-                      metadata from the Hello Linden database. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      disabled={deletePending}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDelete();
-                      }}
-                    >
-                      {deletePending ? "Deleting..." : "Yes, Delete Permanently"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </CardContent>
-          </Card>
+                    {deletePending ? "Deleting..." : "Yes, Delete Permanently"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+
+        {/* Bottom Actions Bar */}
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-end gap-3 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            asChild
+            className="w-full sm:w-auto"
+          >
+            <Link href="/listings">Cancel</Link>
+          </Button>
+          <Button
+            type="submit"
+            disabled={pending || deletePending}
+            className="w-full sm:w-auto"
+          >
+            <Save className="size-4 mr-1.5" />
+            {pending ? "Saving Changes..." : "Save Changes"}
+          </Button>
         </div>
       </div>
     </form>

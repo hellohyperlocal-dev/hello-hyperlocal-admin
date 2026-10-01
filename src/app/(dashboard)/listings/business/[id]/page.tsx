@@ -44,7 +44,7 @@ export default async function BusinessEditPage({ params }: Props) {
   }
 
   return (
-    <div className="min-w-0 max-w-5xl mx-auto space-y-6">
+    <div className="min-w-0 max-w-3xl mx-auto space-y-6 pb-16">
       <BusinessEditForm business={business} />
     </div>
   );
