@@ -96,5 +96,6 @@ export async function createCommunityPost(formData: FormData): Promise<{ error?:
   });
 
   revalidatePath("/moderation");
+  revalidatePath("/");
   return {};
 }
