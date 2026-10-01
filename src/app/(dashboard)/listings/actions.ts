@@ -163,6 +163,35 @@ export async function deleteBusiness(id: string): Promise<{ error?: string }> {
     .eq("id", id)
     .maybeSingle();
 
+  // 1. Delete linked marketplace listings (e.g. mirrored listings)
+  const { error: mpError } = await supabaseAdmin
+    .from("marketplace_listings")
+    .delete()
+    .eq("business_id", id);
+
+  if (mpError) {
+    // If deletion is blocked, attempt to unlink
+    await supabaseAdmin
+      .from("marketplace_listings")
+      .update({ business_id: null })
+      .eq("business_id", id);
+  }
+
+  // 2. Delete linked Love Local specials for this business
+  const { error: llError } = await supabaseAdmin
+    .from("love_local_offers")
+    .delete()
+    .eq("business_id", id);
+
+  if (llError) {
+    // Fallback: unlink if delete fails
+    await supabaseAdmin
+      .from("love_local_offers")
+      .update({ business_id: null })
+      .eq("business_id", id);
+  }
+
+  // 3. Delete the local business record
   const { error } = await supabaseAdmin.from("local_businesses").delete().eq("id", id);
   if (error) return { error: error.message };
 
@@ -172,6 +201,8 @@ export async function deleteBusiness(id: string): Promise<{ error?: string }> {
   });
 
   revalidatePath("/listings");
+  revalidatePath("/");
+  revalidatePath("/moderation");
   return {};
 }
 
