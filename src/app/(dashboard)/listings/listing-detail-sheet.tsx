@@ -129,7 +129,7 @@ export function ListingDetailSheet({ item, open, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 flex flex-col h-full overflow-hidden"
+        className="w-full sm:w-[640px] data-[side=right]:sm:w-[640px] data-[side=right]:!max-w-[640px] p-0 flex flex-col h-full overflow-hidden"
       >
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {item.type === "business" && (
