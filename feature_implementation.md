@@ -84,12 +84,21 @@ The portal operates against the same unified Supabase PostgreSQL database, authe
 - **Local Businesses Management** (`local_businesses` table):
   - Table displaying business name, category, address, review score, open/closed status, and creation date.
   - Multi-field **Add Business** modal: Business Name, Category Select, Physical Address, Description, Operating Hours, Cover Image Uploader, and Open/Closed toggle.
+  - **Slide-Over Detail Sheet (Option A)**: Clicking any table row opens a slide-over drawer from the right, showing high-res cover photos, operating hours, address + Google Maps link, GPS coordinates, full description, star ratings, and quick actions.
+  - **Dedicated Full-Page Edit Route (Option B - `/listings/business/[id]`)**: Deep editor accessible via "Edit Full Details" in the slide-over sheet or actions menu. Supports editing core info, location, hours, description, Cloudflare R2 cover image replacement (`FileUploader`), status toggles, and seeded rating overrides.
+  - **Guarded Deletion System**: `deleteBusiness(id)` server action protected by `AlertDialog` confirmation modals and audit logging to `admin_activity_log`.
+  - **Table Actions Dropdown**: Dedicated `...` menu with View Details, Edit Business, Toggle Open/Closed, and Delete Business.
+  - **Mobile Responsive Design**: Touch-friendly targets, horizontal scroll containment (`overflow-x-auto`), adaptive drawer width (`w-full sm:max-w-lg md:max-w-xl`), and responsive multi-column to single-column form stacking.
 - **Classifieds & Marketplace** (`marketplace_listings` table):
   - Overview of resident classified items with title, price in ZAR, category (`services`, `for-sale`, `stays`), status, and moderation unpublish controls.
+  - Slide-over sheet inspection for full photo galleries, seller contact, and asking price.
+  - Permanent delete action with confirmation modal.
   - **Create Marketplace Listing** modal with pre-approved administrator attribution.
 - **Love Local Specials & Offers** (`love_local_offers` table):
   - Local merchant discount promotion system.
   - Supports promotional pricing (original price vs. offer price), discount percentages, promotional expiration dates, and "Special" badge highlights.
+  - Slide-over sheet inspection for promo details, terms, and participating business.
+  - Unpublish / reject and permanent delete actions.
 
 ---
 
