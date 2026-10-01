@@ -121,7 +121,7 @@ export function ListingDetailSheet({ item, open, onOpenChange }: Props) {
         toast.error(res.error);
         return;
       }
-      toast.success("Listing status updated to rejected.");
+      toast.success("Listing has been unpublished from the mobile app.");
     });
   };
 
@@ -129,7 +129,7 @@ export function ListingDetailSheet({ item, open, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-lg md:max-w-xl p-0 flex flex-col h-full overflow-hidden"
+        className="w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl p-0 flex flex-col h-full overflow-hidden"
       >
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {item.type === "business" && (
@@ -358,7 +358,7 @@ function BusinessContent({
               <Globe className="size-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-xs font-medium text-muted-foreground">GPS Coordinates</div>
+              <div className="text-xs font-medium text-muted-foreground">Map Coordinates</div>
               <div className="text-xs font-mono text-foreground mt-0.5">
                 {business.latitude ?? "—"}, {business.longitude ?? "—"}
               </div>

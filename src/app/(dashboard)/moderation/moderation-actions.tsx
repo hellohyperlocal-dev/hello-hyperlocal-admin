@@ -55,7 +55,7 @@ export function ContentActions({ table, id }: { table: ModerationTable; id: stri
           <AlertDialogHeader>
             <AlertDialogTitle>Reject this content?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove the item from mobile community feeds. Please provide a reason to assist with moderation records.
+              This will remove the post from the mobile app. Please enter a brief reason for your team&apos;s records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea

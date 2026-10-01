@@ -63,7 +63,7 @@ export function UserActions({ id, isSuspended }: { id: string; isSuspended: bool
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
-            placeholder="Reason for suspension (required for audit log)…"
+            placeholder="Reason for suspension (e.g. spam, inappropriate behavior, community guidelines violation)…"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             rows={3}

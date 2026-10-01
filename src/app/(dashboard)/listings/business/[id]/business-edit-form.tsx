@@ -195,7 +195,7 @@ export function BusinessEditForm({ business }: Props) {
           <CardHeader>
             <CardTitle className="text-lg">Cover Photo</CardTitle>
             <CardDescription>
-              High-resolution storefront or logo image. Stored on Cloudflare R2 with zero egress fees.
+              Upload a storefront photo or logo to display on the mobile app.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -243,7 +243,7 @@ export function BusinessEditForm({ business }: Props) {
           <CardHeader>
             <CardTitle className="text-lg">Location &amp; Operating Hours</CardTitle>
             <CardDescription>
-              Physical storefront coordinates and opening times for resident navigation.
+              Store address and opening hours for community members visiting in person.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -277,7 +277,7 @@ export function BusinessEditForm({ business }: Props) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude (GPS)</Label>
+                <Label htmlFor="latitude">Map Latitude (optional)</Label>
                 <Input
                   id="latitude"
                   type="number"
@@ -288,7 +288,7 @@ export function BusinessEditForm({ business }: Props) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude (GPS)</Label>
+                <Label htmlFor="longitude">Map Longitude (optional)</Label>
                 <Input
                   id="longitude"
                   type="number"
@@ -299,6 +299,9 @@ export function BusinessEditForm({ business }: Props) {
                 />
               </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Optional coordinates used to place an exact pin on the mobile map.
+            </p>
           </CardContent>
         </Card>
 
@@ -307,7 +310,7 @@ export function BusinessEditForm({ business }: Props) {
           <CardHeader>
             <CardTitle className="text-lg">Status &amp; Ratings</CardTitle>
             <CardDescription>
-              Operating status and seeded ratings in the directory.
+              Store status and initial ratings displayed in the directory.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -361,7 +364,7 @@ export function BusinessEditForm({ business }: Props) {
               Danger Zone
             </CardTitle>
             <CardDescription className="text-xs">
-              Permanent deletion removes this business listing and all associated data from Hello Linden.
+              Permanently delete this business listing and all its details from the directory.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -382,8 +385,7 @@ export function BusinessEditForm({ business }: Props) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete &quot;{business.name}&quot;?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action will permanently delete this business listing and its
-                    metadata from the Hello Linden database. This action cannot be undone.
+                    This will permanently remove this business listing from Hello Linden. This action cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

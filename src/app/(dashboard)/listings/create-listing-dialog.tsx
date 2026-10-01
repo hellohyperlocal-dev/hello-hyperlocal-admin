@@ -183,7 +183,7 @@ export function CreateListingDialog() {
                   <Input id="biz-hours" name="hours" placeholder="e.g. Mon-Sat 08:00 - 17:00" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="biz-rating">Initial rating</Label>
+                  <Label htmlFor="biz-rating">Starting rating</Label>
                   <Input id="biz-rating" name="rating" type="number" step="0.1" min="1" max="5" defaultValue="5.0" />
                 </div>
               </div>
@@ -241,8 +241,8 @@ export function CreateListingDialog() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="mp-price">Price display</Label>
-                  <Input id="mp-price" name="price" placeholder="e.g. R450 or R180/hr" required />
+                  <Label htmlFor="mp-price">Price</Label>
+                  <Input id="mp-price" name="price" placeholder="e.g. R450 or Free" required />
                 </div>
               </div>
 
