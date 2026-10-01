@@ -83,7 +83,13 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
               )}
             </div>
 
-            <UserActions id={user.id} isSuspended={user.is_suspended} />
+            <UserActions
+              id={user.id}
+              isSuspended={user.is_suspended}
+              userName={displayName}
+              displayMode="buttons"
+              redirectTo="/users"
+            />
           </CardContent>
         </Card>
 

@@ -123,7 +123,11 @@ function UsersTable({
                   {user.is_suspended ? <Badge variant="destructive">Suspended</Badge> : <Badge variant="secondary">Active</Badge>}
                 </TableCell>
                 <TableCell className="text-right">
-                  <UserActions id={user.id} isSuspended={user.is_suspended} />
+                  <UserActions
+                    id={user.id}
+                    isSuspended={user.is_suspended}
+                    userName={user.full_name || user.business_name || "this user"}
+                  />
                 </TableCell>
               </TableRow>
             ))

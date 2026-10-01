@@ -108,3 +108,107 @@ export async function createUser(formData: FormData): Promise<{ error?: string }
   revalidatePath("/users");
   return {};
 }
+
+export async function deleteUser(id: string): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  if (admin.id === id) {
+    return { error: "You cannot delete your own admin account." };
+  }
+
+  const supabaseAdmin = createAdminClient();
+
+  // 1. Fetch user details for audit logging
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("full_name, business_name, role")
+    .eq("id", id)
+    .maybeSingle();
+
+  const userName = profile?.full_name || profile?.business_name || "User";
+
+  // 2. Cascade delete dependent content authored by this user
+  // Marketplace listings
+  await supabaseAdmin
+    .from("marketplace_listings")
+    .delete()
+    .eq("author_id", id);
+
+  // Love Local offers
+  await supabaseAdmin
+    .from("love_local_offers")
+    .delete()
+    .eq("author_id", id);
+
+  // Community posts & their reports
+  const { data: userPosts } = await supabaseAdmin
+    .from("community_posts")
+    .select("id")
+    .eq("author_id", id);
+
+  if (userPosts && userPosts.length > 0) {
+    const postIds = userPosts.map((p) => p.id);
+    await supabaseAdmin
+      .from("reports")
+      .delete()
+      .in("post_id", postIds);
+
+    await supabaseAdmin
+      .from("community_posts")
+      .delete()
+      .eq("author_id", id);
+  }
+
+  // Reports filed by this user
+  await supabaseAdmin
+    .from("reports")
+    .delete()
+    .eq("reporter_id", id);
+
+  // Event RSVPs by this user
+  await supabaseAdmin
+    .from("event_rsvps")
+    .delete()
+    .eq("user_id", id);
+
+  // Unlink businesses owned by this user
+  await supabaseAdmin
+    .from("local_businesses")
+    .update({ owner_id: null })
+    .eq("owner_id", id);
+
+  // Ward updates if councillor
+  await supabaseAdmin
+    .from("ward_updates")
+    .delete()
+    .eq("councillor_id", id);
+
+  // 3. Delete profile record
+  const { error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .delete()
+    .eq("id", id);
+
+  if (profileError) {
+    return { error: profileError.message };
+  }
+
+  // 4. Delete Supabase Auth account
+  const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(id);
+  if (authError) {
+    console.error("Auth deletion note:", authError.message);
+  }
+
+  // 5. Audit log
+  await logActivity(admin.id, "user.deleted", "profiles", id, {
+    name: userName,
+    role: profile?.role ?? "resident",
+  });
+
+  revalidatePath("/users");
+  revalidatePath("/");
+  revalidatePath("/analytics");
+  return {};
+}
+
