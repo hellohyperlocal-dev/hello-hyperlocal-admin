@@ -150,3 +150,106 @@ export async function createLoveLocalOffer(formData: FormData): Promise<{ error?
   revalidatePath("/listings");
   return {};
 }
+
+export async function deleteBusiness(id: string): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+
+  const { data: existing } = await supabaseAdmin
+    .from("local_businesses")
+    .select("name, category")
+    .eq("id", id)
+    .maybeSingle();
+
+  const { error } = await supabaseAdmin.from("local_businesses").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, "business.deleted", "local_businesses", id, {
+    name: existing?.name ?? "Unknown",
+    category: existing?.category ?? "Unknown",
+  });
+
+  revalidatePath("/listings");
+  return {};
+}
+
+export async function updateBusiness(id: string, formData: FormData): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const name = String(formData.get("name") || "").trim();
+  const category = String(formData.get("category") || BUSINESS_CATEGORIES[0]).trim();
+  const address = String(formData.get("address") || "").trim() || null;
+  const description = String(formData.get("description") || "").trim() || null;
+  const hours = String(formData.get("hours") || "").trim() || null;
+  const rating = Number(formData.get("rating") || 5.0);
+  const reviewCount = Number(formData.get("reviewCount") || 0);
+  const isOpen = formData.get("isOpen") !== "false";
+  const imageUrl = String(formData.get("imageUrl") || "").trim() || null;
+  const latitude = formData.get("latitude") ? Number(formData.get("latitude")) : null;
+  const longitude = formData.get("longitude") ? Number(formData.get("longitude")) : null;
+
+  if (!name) return { error: "Business name is required." };
+
+  if (!(BUSINESS_CATEGORIES as readonly string[]).includes(category)) {
+    return { error: "Invalid business category." };
+  }
+
+  const supabaseAdmin = createAdminClient();
+  const { error } = await supabaseAdmin
+    .from("local_businesses")
+    .update({
+      name,
+      category,
+      address,
+      description,
+      hours,
+      rating,
+      review_count: reviewCount,
+      is_open: isOpen,
+      image_url: imageUrl,
+      latitude,
+      longitude,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, "business.updated", "local_businesses", id, { name, category });
+  revalidatePath("/listings");
+  revalidatePath(`/listings/business/${id}`);
+  return {};
+}
+
+export async function toggleBusinessOpen(id: string, isOpen: boolean): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+  const { error } = await supabaseAdmin
+    .from("local_businesses")
+    .update({ is_open: isOpen })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, "business.toggled_open", "local_businesses", id, { is_open: isOpen });
+  revalidatePath("/listings");
+  revalidatePath(`/listings/business/${id}`);
+  return {};
+}
+
+export async function deleteListing(table: ListingTable, id: string): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+  const { error } = await supabaseAdmin.from(table).delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, `${table}.deleted`, table, id, {});
+  revalidatePath("/listings");
+  return {};
+}

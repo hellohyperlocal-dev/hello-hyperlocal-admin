@@ -1,133 +1,90 @@
-import { getBusinesses, getMarketplaceListings, getLoveLocalOffers, type BusinessRow, type ListingRow } from "@/lib/listings";
+import {
+  getBusinesses,
+  getMarketplaceListings,
+  getLoveLocalOffers,
+  type BusinessRow,
+  type ListingRow,
+  type LoveLocalOfferRow,
+} from "@/lib/listings";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UnpublishButton } from "./unpublish-button";
 import { CreateListingDialog } from "./create-listing-dialog";
+import { BusinessTable } from "./business-table";
+import { ListingTableClient } from "./listing-table-client";
 
 const SAMPLE_BUSINESSES: BusinessRow[] = [
-  { id: "sample-1", name: "Corner Cafe", category: "Food", address: "12 4th Ave", is_open: true, rating: 4.5, review_count: 12, created_at: new Date().toISOString() },
+  {
+    id: "sample-1",
+    name: "Corner Cafe",
+    category: "Restaurants",
+    address: "12 4th Ave, Linden",
+    description: "A cozy neighborhood cafe serving artisan roasts and fresh breakfast pastries.",
+    hours: "7am–5pm daily",
+    is_open: true,
+    rating: 4.8,
+    review_count: 42,
+    image_url: null,
+    video_url: null,
+    latitude: -26.1417,
+    longitude: 27.9971,
+    also_in_marketplace: false,
+    created_at: new Date().toISOString(),
+  },
 ];
 const SAMPLE_LISTINGS: ListingRow[] = [];
+const SAMPLE_OFFERS: LoveLocalOfferRow[] = [];
 
 export default async function ListingsPage() {
   const [businesses, marketplace, loveLocal] = isPreviewMode
-    ? [SAMPLE_BUSINESSES, SAMPLE_LISTINGS, SAMPLE_LISTINGS]
+    ? [SAMPLE_BUSINESSES, SAMPLE_LISTINGS, SAMPLE_OFFERS]
     : await Promise.all([getBusinesses(), getMarketplaceListings(), getLoveLocalOffers()]);
 
   return (
     <div className="min-w-0 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-foreground">Businesses &amp; Listings</h1>
-          <p className="text-sm text-muted-foreground">Oversight and management of local businesses, marketplace, and Love Local.</p>
+          <p className="text-sm text-muted-foreground">
+            Oversight, deep inspection, and management of local businesses, marketplace ads, and Love Local specials.
+          </p>
         </div>
         <CreateListingDialog />
       </div>
 
-      <Tabs defaultValue="businesses">
-        <TabsList>
-          <TabsTrigger value="businesses">Businesses ({businesses.length})</TabsTrigger>
-          <TabsTrigger value="marketplace">Marketplace ({marketplace.length})</TabsTrigger>
-          <TabsTrigger value="love-local">Love Local ({loveLocal.length})</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="businesses" className="w-full">
+        <div className="overflow-x-auto pb-1">
+          <TabsList className="w-full sm:w-auto inline-flex">
+            <TabsTrigger value="businesses" className="flex-1 sm:flex-initial">
+              Businesses ({businesses.length})
+            </TabsTrigger>
+            <TabsTrigger value="marketplace" className="flex-1 sm:flex-initial">
+              Marketplace ({marketplace.length})
+            </TabsTrigger>
+            <TabsTrigger value="love-local" className="flex-1 sm:flex-initial">
+              Love Local ({loveLocal.length})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="businesses">
-          <Card className="py-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Rating</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {businesses.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      No businesses yet.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  businesses.map((b) => (
-                    <TableRow key={b.id}>
-                      <TableCell className="font-medium">{b.name}</TableCell>
-                      <TableCell>{b.category}</TableCell>
-                      <TableCell>{b.address || "—"}</TableCell>
-                      <TableCell>
-                        {b.rating.toFixed(1)} ({b.review_count})
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={b.is_open ? "secondary" : "outline"}>{b.is_open ? "Open" : "Closed"}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        <TabsContent value="businesses" className="mt-4">
+          <Card className="py-0 overflow-hidden">
+            <BusinessTable businesses={businesses} />
           </Card>
         </TabsContent>
 
-        <TabsContent value="marketplace">
-          <ListingTable table="marketplace_listings" listings={marketplace} />
+        <TabsContent value="marketplace" className="mt-4">
+          <Card className="py-0 overflow-hidden">
+            <ListingTableClient table="marketplace_listings" listings={marketplace} />
+          </Card>
         </TabsContent>
 
-        <TabsContent value="love-local">
-          <ListingTable table="love_local_offers" listings={loveLocal} />
+        <TabsContent value="love-local" className="mt-4">
+          <Card className="py-0 overflow-hidden">
+            <ListingTableClient table="love_local_offers" listings={loveLocal} />
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-function ListingTable({ table, listings }: { table: "marketplace_listings" | "love_local_offers"; listings: ListingRow[] }) {
-  return (
-    <Card className="py-0">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {listings.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                Nothing here yet.
-              </TableCell>
-            </TableRow>
-          ) : (
-            listings.map((l) => (
-              <TableRow key={l.id}>
-                <TableCell className="font-medium">{l.title}</TableCell>
-                <TableCell>{l.category}</TableCell>
-                <TableCell>{l.price}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      l.moderation_status === "approved" ? "secondary" : l.moderation_status === "rejected" ? "outline" : "default"
-                    }
-                  >
-                    {l.moderation_status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  <UnpublishButton table={table} id={l.id} status={l.moderation_status} />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </Card>
   );
 }
