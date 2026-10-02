@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import type { InboxItem, InboxItemInput } from "@/components/inbox/types";
 import { ExportButton } from "./export-button";
 import { EmailRegistrantDialog } from "./email-registrant-dialog";
-import { BroadcastEmailDialog } from "./broadcast-email-dialog";
 
 const SAMPLE_ITEMS: InboxItemInput[] = [
   {
@@ -121,7 +120,6 @@ function PageHeader({ count }: { count?: number }) {
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <BroadcastEmailDialog />
         <ExportButton totalCount={count} />
       </div>
     </div>
