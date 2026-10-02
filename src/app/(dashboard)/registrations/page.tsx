@@ -4,6 +4,9 @@ import { InboxShell } from "@/components/inbox/inbox-shell";
 import { InboxDetailShell } from "@/components/inbox/inbox-detail-shell";
 import { Badge } from "@/components/ui/badge";
 import type { InboxItem, InboxItemInput } from "@/components/inbox/types";
+import { ExportButton } from "./export-button";
+import { EmailRegistrantDialog } from "./email-registrant-dialog";
+import { BroadcastEmailDialog } from "./broadcast-email-dialog";
 
 const SAMPLE_ITEMS: InboxItemInput[] = [
   {
@@ -27,20 +30,48 @@ const SAMPLE_ITEMS: InboxItemInput[] = [
   },
 ];
 
-const SAMPLE_DETAIL: Record<string, Partial<RegistrationDetail>> = {
+const SAMPLE_DETAIL: Record<string, RegistrationDetail> = {
   "sample-1": {
+    id: "sample-1",
     email: "naledi@example.com",
+    roles: ["resident", "founding_neighbour"],
+    first_name: "Naledi",
+    last_name: "Khumalo",
+    full_name: "Naledi Khumalo",
     mobile: "+27 82 000 0000",
     suburb: "Linden",
     interests: ["events", "marketplace"],
-    roles: ["resident", "founding_neighbour"],
+    business_name: null,
+    business_address: null,
+    wants_window_sticker: true,
+    details: { message: "Linden resident, excited to join" },
+    consent_at: new Date().toISOString(),
+    source: "website",
+    created_at: new Date().toISOString(),
+    claimed_profile_id: null,
+    claimed_at: null,
+    primaryRole: "founding_neighbour",
   },
   "sample-2": {
+    id: "sample-2",
     email: "corner@example.com",
+    roles: ["business", "founding_business"],
+    first_name: null,
+    last_name: null,
+    full_name: null,
+    mobile: "+27 83 111 2222",
+    suburb: "Linden",
+    interests: ["food", "community"],
     business_name: "Corner Cafe",
     business_address: "12 4th Avenue, Linden",
     wants_window_sticker: true,
-    roles: ["business", "founding_business"],
+    details: { message: "Corner bakery & coffee shop" },
+    consent_at: new Date().toISOString(),
+    source: "website",
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    claimed_profile_id: "demo-claim",
+    claimed_at: new Date().toISOString(),
+    primaryRole: "founding_business",
   },
 };
 
@@ -49,12 +80,12 @@ export default async function RegistrationsPage() {
     const items: InboxItem[] = SAMPLE_ITEMS.map((item) => ({
       ...item,
       detail: (
-        <RegistrationDetailView item={item} detail={SAMPLE_DETAIL[item.id] as RegistrationDetail} />
+        <RegistrationDetailView item={item} detail={SAMPLE_DETAIL[item.id]} />
       ),
     }));
     return (
       <div className="min-w-0 space-y-4">
-        <PageHeader />
+        <PageHeader count={items.length} />
         <InboxShell
           categories={REGISTRATION_ROLES.map((r) => ({
             ...r,
@@ -74,24 +105,37 @@ export default async function RegistrationsPage() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <PageHeader />
+      <PageHeader count={items.length} />
       <InboxShell categories={categories} items={items} />
     </div>
   );
 }
 
-function PageHeader() {
+function PageHeader({ count }: { count?: number }) {
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-foreground">Registrations</h1>
-      <p className="text-sm text-muted-foreground">Website sign-ups from hellohyperlocal.co.za.</p>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">Registrations</h1>
+        <p className="text-sm text-muted-foreground">
+          Website sign-ups and founding members from hellohyperlocal.co.za.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <BroadcastEmailDialog />
+        <ExportButton totalCount={count} />
+      </div>
     </div>
   );
 }
 
 function RegistrationDetailView({ item, detail }: { item: InboxItemInput; detail: RegistrationDetail }) {
   return (
-    <InboxDetailShell title={item.title} subtitle={item.subtitle} timestamp={item.timestamp}>
+    <InboxDetailShell
+      title={item.title}
+      subtitle={item.subtitle}
+      timestamp={item.timestamp}
+      actions={<EmailRegistrantDialog registration={detail} recipientTitle={item.title} />}
+    >
       <dl className="space-y-3 text-sm">
         <Row label="Email" value={detail.email} />
         {detail.mobile && <Row label="Mobile" value={detail.mobile} />}
