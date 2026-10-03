@@ -84,7 +84,7 @@ export default async function RegistrationsPage() {
     }));
     return (
       <div className="min-w-0 space-y-4">
-        <PageHeader count={items.length} />
+        <PageHeader />
         <InboxShell
           categories={REGISTRATION_ROLES.map((r) => ({
             ...r,
@@ -104,24 +104,20 @@ export default async function RegistrationsPage() {
 
   return (
     <div className="min-w-0 space-y-4">
-      <PageHeader count={items.length} />
+      <PageHeader />
       <InboxShell categories={categories} items={items} />
     </div>
   );
 }
 
-function PageHeader({ count }: { count?: number }) {
+function PageHeader() {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex items-center justify-between">
       <div>
         <h1 className="text-2xl font-semibold text-foreground">Registrations</h1>
-        <p className="text-sm text-muted-foreground">
-          Website sign-ups and founding members from hellohyperlocal.co.za.
-        </p>
+        <p className="text-sm text-muted-foreground">Website sign-ups from hellohyperlocal.co.za.</p>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <ExportButton totalCount={count} />
-      </div>
+      <ExportButton />
     </div>
   );
 }
