@@ -73,7 +73,9 @@ export async function getMailThreads(options: {
     .order("last_message_at", { ascending: false });
 
   // Folder filtering
-  if (folder === "trash") {
+  if (folder === "all") {
+    // No folder filtering: fetch all threads
+  } else if (folder === "trash") {
     query = query.eq("is_trashed", true);
   } else if (folder === "archive") {
     query = query.eq("is_archived", true).eq("is_trashed", false);

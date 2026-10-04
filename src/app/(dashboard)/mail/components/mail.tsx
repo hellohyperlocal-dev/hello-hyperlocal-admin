@@ -24,16 +24,14 @@ import { AccountSwitcher } from "./account-switcher"
 import { MailDisplay } from "./mail-display"
 import { MailList } from "./mail-list"
 import { Nav } from "./nav"
-import { type Mail } from "../data"
+import { type Mail, type Account } from "../data"
 import { useMail } from "../use-mail"
 import { Button } from "@/components/ui/button"
+import { updateThreadStateAction } from "../actions"
+import { toast } from "sonner"
 
 interface MailProps {
-  accounts: {
-    label: string;
-    email: string;
-    icon: React.ReactNode;
-  }[];
+  accounts: Account[];
   mails: Mail[];
   registrationCounts?: {
     founding_neighbour?: number;
@@ -58,26 +56,88 @@ const folderTitles: Record<string, string> = {
 
 export function Mail({
   accounts,
-  mails,
-  registrationCounts,
+  mails: initialMails,
 }: MailProps) {
   const [mail, setMail] = useMail();
+  const [mailList, setMailList] = React.useState<Mail[]>(initialMails);
+  const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
   const [selectedFolder, setSelectedFolder] = React.useState<string>("inbox");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
 
+  // Sync if initialMails changes from server revalidation
+  React.useEffect(() => {
+    setMailList(initialMails);
+  }, [initialMails]);
+
+  // Compute live folder counts
+  const folderCounts = React.useMemo(() => {
+    let inbox = 0;
+    let sent = 0;
+    let trash = 0;
+    let archive = 0;
+    let founding_neighbour = 0;
+    let founding_business = 0;
+    let partner_interest = 0;
+    let general_enquiry = 0;
+
+    mailList.forEach((m) => {
+      if (m.is_trashed) {
+        trash++;
+      } else if (m.is_archived) {
+        archive++;
+      } else {
+        inbox++;
+        if (m.category === "founding_neighbour") founding_neighbour++;
+        else if (m.category === "founding_business") founding_business++;
+        else if (m.category === "partner_interest") partner_interest++;
+        else if (m.category === "general_enquiry") general_enquiry++;
+      }
+
+      if (!m.is_trashed && m.status === "replied") {
+        sent++;
+      }
+    });
+
+    return {
+      inbox,
+      sent,
+      trash,
+      archive,
+      drafts: 0,
+      junk: 0,
+      categories: {
+        founding_neighbour,
+        founding_business,
+        partner_interest,
+        general_enquiry,
+      },
+    };
+  }, [mailList]);
+
   const filteredMails = React.useMemo(() => {
-    let list = mails;
+    let list: Mail[] = [];
+
     if (selectedFolder === "inbox") {
-      list = mails;
+      list = mailList.filter((m) => !m.is_trashed && !m.is_archived);
+    } else if (selectedFolder === "sent") {
+      list = mailList.filter((m) => !m.is_trashed && m.status === "replied");
+    } else if (selectedFolder === "archive") {
+      list = mailList.filter((m) => !m.is_trashed && m.is_archived);
+    } else if (selectedFolder === "trash") {
+      list = mailList.filter((m) => Boolean(m.is_trashed));
+    } else if (selectedFolder === "drafts" || selectedFolder === "junk") {
+      list = [];
     } else if (
       selectedFolder === "founding_neighbour" ||
       selectedFolder === "founding_business" ||
       selectedFolder === "partner_interest" ||
       selectedFolder === "general_enquiry"
     ) {
-      list = mails.filter((m) => m.category === selectedFolder);
+      list = mailList.filter(
+        (m) => !m.is_trashed && !m.is_archived && m.category === selectedFolder
+      );
     } else {
-      list = [];
+      list = mailList;
     }
 
     if (searchQuery.trim()) {
@@ -93,7 +153,7 @@ export function Mail({
     }
 
     return list;
-  }, [mails, selectedFolder, searchQuery]);
+  }, [mailList, selectedFolder, searchQuery]);
 
   React.useEffect(() => {
     if (!mail.selected && filteredMails.length > 0) {
@@ -103,21 +163,61 @@ export function Mail({
 
   const handleSelectFolder = (folderId: string) => {
     setSelectedFolder(folderId);
-    let nextList = mails;
+    let nextList: Mail[] = [];
     if (folderId === "inbox") {
-      nextList = mails;
+      nextList = mailList.filter((m) => !m.is_trashed && !m.is_archived);
+    } else if (folderId === "sent") {
+      nextList = mailList.filter((m) => !m.is_trashed && m.status === "replied");
+    } else if (folderId === "archive") {
+      nextList = mailList.filter((m) => !m.is_trashed && m.is_archived);
+    } else if (folderId === "trash") {
+      nextList = mailList.filter((m) => Boolean(m.is_trashed));
     } else if (
       folderId === "founding_neighbour" ||
       folderId === "founding_business" ||
       folderId === "partner_interest" ||
       folderId === "general_enquiry"
     ) {
-      nextList = mails.filter((m) => m.category === folderId);
-    } else {
-      nextList = [];
+      nextList = mailList.filter(
+        (m) => !m.is_trashed && !m.is_archived && m.category === folderId
+      );
     }
     setMail({ selected: nextList[0]?.id ?? null });
   };
+
+  const handleThreadUpdated = (updatedMail: Mail) => {
+    setMailList((prev) =>
+      prev.map((m) => (m.id === updatedMail.id ? { ...m, ...updatedMail } : m))
+    );
+  };
+
+  const handleThreadRemoved = (threadId: string) => {
+    setMailList((prev) =>
+      prev.map((m) => {
+        if (m.id === threadId) {
+          if (selectedFolder === "archive") {
+            return { ...m, is_archived: false };
+          }
+          if (selectedFolder === "trash") {
+            return { ...m, is_trashed: false };
+          }
+          return { ...m, is_archived: true };
+        }
+        return m;
+      })
+    );
+  };
+
+  const handleToggleStar = async (threadId: string, currentStarred: boolean) => {
+    const next = !currentStarred;
+    setMailList((prev) =>
+      prev.map((m) => (m.id === threadId ? { ...m, is_starred: next } : m))
+    );
+    await updateThreadStateAction(threadId, { is_starred: next });
+    toast.success(next ? "Starred" : "Unstarred");
+  };
+
+  const currentSelectedMail = mailList.find((item) => item.id === mail.selected) || null;
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -127,7 +227,12 @@ export function Mail({
       >
         <ResizablePanel defaultSize="20%" minSize="15%" maxSize="35%">
           <div className="flex h-[52px] items-center px-2">
-            <AccountSwitcher isCollapsed={false} accounts={accounts} />
+            <AccountSwitcher
+              isCollapsed={false}
+              accounts={accounts}
+              selectedEmail={selectedAccount.email}
+              onSelectAccount={(acc) => setSelectedAccount(acc)}
+            />
           </div>
           <Separator className="mx-0" />
           <div className="m-3">
@@ -142,7 +247,7 @@ export function Mail({
             links={[
               {
                 title: "Inbox",
-                label: mails.length > 0 ? String(mails.length) : "",
+                label: folderCounts.inbox > 0 ? String(folderCounts.inbox) : "",
                 icon: Inbox,
                 variant: selectedFolder === "inbox" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("inbox"),
@@ -156,7 +261,7 @@ export function Mail({
               },
               {
                 title: "Sent",
-                label: "",
+                label: folderCounts.sent > 0 ? String(folderCounts.sent) : "",
                 icon: Send,
                 variant: selectedFolder === "sent" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("sent"),
@@ -170,14 +275,14 @@ export function Mail({
               },
               {
                 title: "Trash",
-                label: "",
+                label: folderCounts.trash > 0 ? String(folderCounts.trash) : "",
                 icon: Trash2,
                 variant: selectedFolder === "trash" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("trash"),
               },
               {
                 title: "Archive",
-                label: "",
+                label: folderCounts.archive > 0 ? String(folderCounts.archive) : "",
                 icon: Archive,
                 variant: selectedFolder === "archive" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("archive"),
@@ -190,28 +295,28 @@ export function Mail({
             links={[
               {
                 title: "Founding Neighbours",
-                label: registrationCounts?.founding_neighbour ? String(registrationCounts.founding_neighbour) : "",
+                label: folderCounts.categories.founding_neighbour > 0 ? String(folderCounts.categories.founding_neighbour) : "",
                 icon: Users,
                 variant: selectedFolder === "founding_neighbour" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("founding_neighbour"),
               },
               {
                 title: "Founding Businesses",
-                label: registrationCounts?.founding_business ? String(registrationCounts.founding_business) : "",
+                label: folderCounts.categories.founding_business > 0 ? String(folderCounts.categories.founding_business) : "",
                 icon: Store,
                 variant: selectedFolder === "founding_business" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("founding_business"),
               },
               {
                 title: "Partner Interest",
-                label: registrationCounts?.partner_interest ? String(registrationCounts.partner_interest) : "",
+                label: folderCounts.categories.partner_interest > 0 ? String(folderCounts.categories.partner_interest) : "",
                 icon: Handshake,
                 variant: selectedFolder === "partner_interest" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("partner_interest"),
               },
               {
                 title: "General Enquiries",
-                label: registrationCounts?.general_enquiry ? String(registrationCounts.general_enquiry) : "",
+                label: folderCounts.categories.general_enquiry > 0 ? String(folderCounts.categories.general_enquiry) : "",
                 icon: HelpCircle,
                 variant: selectedFolder === "general_enquiry" ? "default" : "ghost",
                 onClick: () => handleSelectFolder("general_enquiry"),
@@ -246,18 +351,27 @@ export function Mail({
               </form>
             </div>
             <TabsContent value="all" className="m-0">
-              <MailList items={filteredMails} />
+              <MailList items={filteredMails} onToggleStar={handleToggleStar} />
             </TabsContent>
             <TabsContent value="unread" className="m-0">
-              <MailList items={filteredMails.filter((item) => !item.read)} />
+              <MailList
+                items={filteredMails.filter((item) => !item.read || item.status === "unread")}
+                onToggleStar={handleToggleStar}
+              />
             </TabsContent>
           </Tabs>
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize="48%" minSize="30%">
-          <MailDisplay mail={mails.find((item) => item.id === mail.selected) || null} />
+          <MailDisplay
+            mail={currentSelectedMail}
+            activeAccount={selectedAccount}
+            onThreadUpdated={handleThreadUpdated}
+            onThreadRemoved={handleThreadRemoved}
+          />
         </ResizablePanel>
       </ResizablePanelGroup>
     </TooltipProvider>
   );
 }
+

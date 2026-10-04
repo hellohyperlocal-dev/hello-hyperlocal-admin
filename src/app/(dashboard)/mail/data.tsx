@@ -1,5 +1,6 @@
 import * as React from "react"
 import { HyperlocalLogo } from "@/components/hyperlocal-logo"
+import type { MailMessageRow } from "@/lib/mail"
 
 export interface Mail {
   id: string
@@ -11,11 +12,24 @@ export interface Mail {
   read: boolean
   labels: string[]
   category?: string
+  status?: "unread" | "read" | "replied" | "closed"
+  is_starred?: boolean
+  is_archived?: boolean
+  is_trashed?: boolean
+  snoozed_until?: string | null
+  registration_id?: string | null
+  messages?: MailMessageRow[]
 }
 
-export const accounts = [
+export interface Account {
+  label: string
+  email: string
+  icon: React.ReactNode
+}
+
+export const accounts: Account[] = [
   {
-    label: "Hello Linden",
+    label: "Hello Linden Desk",
     email: "registrations@hellohyperlocal.co.za",
     icon: <HyperlocalLogo className="size-4" />,
   },
@@ -25,7 +39,5 @@ export const accounts = [
     icon: <HyperlocalLogo className="size-4" />,
   },
 ]
-
-export type Account = (typeof accounts)[number]
 
 export const mails: Mail[] = []
