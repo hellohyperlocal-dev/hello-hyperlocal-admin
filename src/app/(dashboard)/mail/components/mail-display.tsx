@@ -58,11 +58,27 @@ export function MailDisplay({
 
   if (!mail) {
     return (
-      <div className="text-muted-foreground flex h-full flex-col items-center justify-center p-8 text-center">
-        <p className="text-sm">No message selected</p>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          Select an inquiry or registration from the list to view the conversation.
-        </p>
+      <div className="flex h-full flex-col">
+        <div className="flex h-[52px] items-center px-4">
+          <div className="flex items-center gap-1.5">
+            <Button variant="ghost" size="icon" disabled className="size-8">
+              <Archive className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" disabled className="size-8">
+              <Trash2 className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon" disabled className="size-8">
+              <Star className="size-4" />
+            </Button>
+          </div>
+        </div>
+        <Separator />
+        <div className="text-muted-foreground flex flex-1 flex-col items-center justify-center p-8 text-center">
+          <p className="text-sm">No message selected</p>
+          <p className="text-xs text-muted-foreground/70 mt-1">
+            Select an inquiry or registration from the list to view the conversation.
+          </p>
+        </div>
       </div>
     );
   }
@@ -172,7 +188,7 @@ export function MailDisplay({
   return (
     <div className="flex h-full flex-col">
       {/* Top Action Toolbar */}
-      <div className="flex items-center p-2">
+      <div className="flex h-[52px] items-center px-4">
         <div className="flex items-center gap-1.5">
           <Button
             variant="ghost"

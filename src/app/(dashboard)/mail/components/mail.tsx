@@ -229,7 +229,7 @@ export function Mail({
         orientation="horizontal"
         className="h-full items-stretch rounded-lg border overflow-hidden"
       >
-        <ResizablePanel defaultSize="20%" minSize="15%" maxSize="35%">
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
           <div className="flex h-[52px] items-center px-2">
             <AccountSwitcher
               isCollapsed={false}
@@ -332,9 +332,9 @@ export function Mail({
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize="32%" minSize="25%">
-          <Tabs defaultValue="all" className="gap-1">
-            <div className="flex items-center px-4 py-1.5">
+        <ResizablePanel defaultSize={35} minSize={28}>
+          <Tabs defaultValue="all" className="flex flex-col h-full m-0 gap-0">
+            <div className="flex h-[52px] items-center px-4">
               <h1 className="text-foreground text-xl font-bold">
                 {folderTitles[selectedFolder] ?? "Inbox"}
               </h1>
@@ -357,10 +357,10 @@ export function Mail({
                 </div>
               </form>
             </div>
-            <TabsContent value="all" className="m-0">
+            <TabsContent value="all" className="m-0 flex-1 overflow-hidden">
               <MailList items={filteredMails} onToggleStar={handleToggleStar} />
             </TabsContent>
-            <TabsContent value="unread" className="m-0">
+            <TabsContent value="unread" className="m-0 flex-1 overflow-hidden">
               <MailList
                 items={filteredMails.filter((item) => !item.read || item.status === "unread")}
                 onToggleStar={handleToggleStar}
@@ -369,7 +369,7 @@ export function Mail({
           </Tabs>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize="48%" minSize="30%">
+        <ResizablePanel defaultSize={45} minSize={30}>
           <MailDisplay
             mail={currentSelectedMail}
             activeAccount={selectedAccount}

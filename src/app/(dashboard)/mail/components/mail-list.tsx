@@ -19,7 +19,7 @@ export function MailList({ items, onToggleStar }: MailListProps) {
   const [mail, setMail] = useMail();
 
   return (
-    <ScrollArea className="h-[calc(100vh-12rem)]">
+    <ScrollArea className="h-full">
       <div className="flex flex-col gap-2 p-4 pt-0">
         {items.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
