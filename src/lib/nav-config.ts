@@ -34,6 +34,12 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    title: "Apps",
+    items: [
+      { href: "/mail", label: "Mail", icon: Mail },
+    ],
+  },
+  {
     title: "Community & Content",
     items: [
       { href: "/registrations", label: "Registrations", icon: Inbox },

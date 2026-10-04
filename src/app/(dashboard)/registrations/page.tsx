@@ -1,181 +1,77 @@
-import { getRegistrations, REGISTRATION_ROLES, type RegistrationDetail } from "@/lib/registrations";
-import { isPreviewMode } from "@/lib/preview-mode";
-import { InboxShell } from "@/components/inbox/inbox-shell";
-import { InboxDetailShell } from "@/components/inbox/inbox-detail-shell";
-import { Badge } from "@/components/ui/badge";
-import type { InboxItem, InboxItemInput } from "@/components/inbox/types";
-import { ExportButton } from "./export-button";
-import { EmailRegistrantDialog } from "./email-registrant-dialog";
+import { getRegistrations, REGISTRATION_ROLES, type RegistrationDetail } from "@/lib/registrations"
+import { RegistrationsClient } from "./registrations-client"
+import type { RegistrationUser } from "./components/data-table"
 
-const SAMPLE_ITEMS: InboxItemInput[] = [
-  {
-    id: "sample-1",
-    categoryId: "founding_neighbour",
-    title: "Naledi Khumalo",
-    subtitle: "Founding Neighbour",
-    preview: "Linden resident, excited to join",
-    timestamp: new Date().toISOString(),
-    isNew: true,
-  },
-  {
-    id: "sample-2",
-    categoryId: "founding_business",
-    title: "Corner Cafe",
-    subtitle: "Founding Business",
-    preview: "12 4th Avenue, Linden",
-    timestamp: new Date(Date.now() - 86400000).toISOString(),
-    isNew: false,
-    badge: { label: "Claimed", variant: "secondary" },
-  },
-];
+function generateAvatar(name: string) {
+  const names = name.split(" ").filter(Boolean)
+  if (names.length >= 2) {
+    return `${names[0][0]}${names[1][0]}`.toUpperCase()
+  }
+  return name.substring(0, 2).toUpperCase() || "U"
+}
 
-const SAMPLE_DETAIL: Record<string, RegistrationDetail> = {
-  "sample-1": {
-    id: "sample-1",
-    email: "naledi@example.com",
-    roles: ["resident", "founding_neighbour"],
-    first_name: "Naledi",
-    last_name: "Khumalo",
-    full_name: "Naledi Khumalo",
-    mobile: "+27 82 000 0000",
-    suburb: "Linden",
-    interests: ["events", "marketplace"],
-    business_name: null,
-    business_address: null,
-    wants_window_sticker: true,
-    details: { message: "Linden resident, excited to join" },
-    consent_at: new Date().toISOString(),
-    source: "website",
-    created_at: new Date().toISOString(),
-    claimed_profile_id: null,
-    claimed_at: null,
-    primaryRole: "founding_neighbour",
-  },
-  "sample-2": {
-    id: "sample-2",
-    email: "corner@example.com",
-    roles: ["business", "founding_business"],
-    first_name: null,
-    last_name: null,
-    full_name: null,
-    mobile: "+27 83 111 2222",
-    suburb: "Linden",
-    interests: ["food", "community"],
-    business_name: "Corner Cafe",
-    business_address: "12 4th Avenue, Linden",
-    wants_window_sticker: true,
-    details: { message: "Corner bakery & coffee shop" },
-    consent_at: new Date().toISOString(),
-    source: "website",
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    claimed_profile_id: "demo-claim",
-    claimed_at: new Date().toISOString(),
-    primaryRole: "founding_business",
-  },
-};
+function mapToUser(reg: RegistrationDetail): RegistrationUser {
+  const name =
+    reg.full_name ||
+    [reg.first_name, reg.last_name].filter(Boolean).join(" ") ||
+    reg.business_name ||
+    reg.email
 
-export default async function RegistrationsPage() {
-  if (isPreviewMode) {
-    const items: InboxItem[] = SAMPLE_ITEMS.map((item) => ({
-      ...item,
-      detail: (
-        <RegistrationDetailView item={item} detail={SAMPLE_DETAIL[item.id]} />
-      ),
-    }));
-    return (
-      <div className="min-w-0 space-y-4">
-        <PageHeader />
-        <InboxShell
-          categories={REGISTRATION_ROLES.map((r) => ({
-            ...r,
-            count: items.filter((i) => i.categoryId === r.id).length,
-          }))}
-          items={items}
-        />
-      </div>
-    );
+  const roleObj = REGISTRATION_ROLES.find((r) => r.id === reg.primaryRole)
+  const roleLabel = roleObj?.label ?? "Registration"
+
+  let category = "Resident"
+  if (reg.business_name || reg.primaryRole === "founding_business") {
+    category = "Business"
+  } else if (reg.primaryRole === "partner_interest") {
+    category = "Partner"
+  } else if (reg.primaryRole === "general_enquiry") {
+    category = "General Enquiry"
   }
 
-  const { categories, items: rawItems, byId } = await getRegistrations();
-  const items: InboxItem[] = rawItems.map((item) => {
-    const detail = byId.get(item.id);
-    return { ...item, detail: detail ? <RegistrationDetailView item={item} detail={detail} /> : null };
-  });
-
-  return (
-    <div className="min-w-0 space-y-4">
-      <PageHeader />
-      <InboxShell categories={categories} items={items} />
-    </div>
-  );
+  return {
+    id: reg.id,
+    name,
+    email: reg.email,
+    avatar: generateAvatar(name),
+    role: roleLabel,
+    rawRole: reg.primaryRole,
+    category,
+    suburb: reg.suburb || "Linden",
+    businessName: reg.business_name,
+    businessAddress: reg.business_address,
+    mobile: reg.mobile,
+    wantsWindowSticker: reg.wants_window_sticker,
+    interests: reg.interests,
+    details: reg.details,
+    status: reg.claimed_at ? "Active" : "Pending",
+    joinedDate: reg.created_at,
+    lastLogin: reg.claimed_at || reg.created_at,
+  }
 }
 
-function PageHeader() {
+export default async function RegistrationsPage() {
+  const { categories, byId } = await getRegistrations()
+
+  const users: RegistrationUser[] = Array.from(byId.values()).map(mapToUser)
+
+  const initialCounts = {
+    total: users.length,
+    neighbours: categories.find((c) => c.id === "founding_neighbour")?.count ?? 0,
+    businesses: categories.find((c) => c.id === "founding_business")?.count ?? 0,
+    pending: users.filter((u) => u.status === "Pending").length,
+  }
+
   return (
-    <div className="flex items-center justify-between">
+    <div className="min-w-0 space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Registrations</h1>
-        <p className="text-sm text-muted-foreground">Website sign-ups from hellohyperlocal.co.za.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Registrations</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage website sign-ups, community applicants, and partner interest from hellohyperlocal.co.za.
+        </p>
       </div>
-      <ExportButton />
-    </div>
-  );
-}
 
-function RegistrationDetailView({ item, detail }: { item: InboxItemInput; detail: RegistrationDetail }) {
-  return (
-    <InboxDetailShell
-      title={item.title}
-      subtitle={item.subtitle}
-      timestamp={item.timestamp}
-      actions={<EmailRegistrantDialog registration={detail} recipientTitle={item.title} />}
-    >
-      <dl className="space-y-3 text-sm">
-        <Row label="Email" value={detail.email} />
-        {detail.mobile && <Row label="Mobile" value={detail.mobile} />}
-        {detail.roles?.length > 0 && (
-          <Row
-            label="Roles"
-            value={
-              <div className="flex flex-wrap gap-1">
-                {detail.roles.map((r) => (
-                  <Badge key={r} variant="outline">
-                    {r}
-                  </Badge>
-                ))}
-              </div>
-            }
-          />
-        )}
-        {detail.suburb && <Row label="Suburb" value={detail.suburb} />}
-        {detail.interests?.length > 0 && <Row label="Interests" value={detail.interests.join(", ")} />}
-        {detail.business_name && <Row label="Business" value={detail.business_name} />}
-        {detail.business_address && <Row label="Business address" value={detail.business_address} />}
-        {detail.wants_window_sticker !== undefined && (
-          <Row label="Wants window sticker" value={detail.wants_window_sticker ? "Yes" : "No"} />
-        )}
-        {detail.details && Object.keys(detail.details).length > 0 && (
-          <Row
-            label="Additional details"
-            value={
-              <pre className="min-w-0 overflow-x-auto rounded-md bg-muted p-3 text-xs whitespace-pre-wrap break-words text-muted-foreground">
-                {JSON.stringify(detail.details, null, 2)}
-              </pre>
-            }
-          />
-        )}
-        <Row label="Marketing consent" value={detail.consent_at ? "Yes" : "No"} />
-        <Row label="Claimed" value={detail.claimed_at ? new Date(detail.claimed_at).toLocaleDateString() : "Not yet"} />
-      </dl>
-    </InboxDetailShell>
-  );
-}
-
-function Row({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="col-span-2 text-foreground">{value}</dd>
+      <RegistrationsClient initialUsers={users} initialCounts={initialCounts} />
     </div>
-  );
+  )
 }
