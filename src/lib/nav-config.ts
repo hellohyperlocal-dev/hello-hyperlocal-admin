@@ -43,8 +43,8 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Community & Content",
     items: [
       { href: "/registrations", label: "Registrations", icon: Inbox },
-      { href: "/moderation", label: "Moderation", icon: ShieldCheck },
       { href: "/listings", label: "Businesses & Listings", icon: Store },
+      { href: "/moderation", label: "Moderation", icon: ShieldCheck },
       { href: "/ward-updates", label: "Ward Updates", icon: Megaphone },
     ],
   },
