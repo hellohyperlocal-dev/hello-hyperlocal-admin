@@ -29,9 +29,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileUploader } from "@/components/media/file-uploader";
 
-export function CreateListingDialog() {
+interface CreateListingDialogProps {
+  defaultTab?: "business" | "marketplace" | "offer";
+  trigger?: React.ReactNode;
+}
+
+export function CreateListingDialog({
+  defaultTab = "business",
+  trigger,
+}: CreateListingDialogProps = {}) {
   const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("business");
+  const [activeTab, setActiveTab] = useState<string>(defaultTab);
   const [businessCategory, setBusinessCategory] = useState<string>(BUSINESS_CATEGORIES[0]);
   const [marketplaceCategory, setMarketplaceCategory] = useState("for-sale");
   const [offerCategory, setOfferCategory] = useState<string>(BUSINESS_CATEGORIES[0]);
@@ -116,9 +124,13 @@ export function CreateListingDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <Plus className="size-4" /> Add business / listing
-        </Button>
+        {trigger ? (
+          trigger
+        ) : (
+          <Button size="sm" className="gap-2 cursor-pointer">
+            <Plus className="size-4" /> Add business / listing
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[540px]">
         <DialogHeader>

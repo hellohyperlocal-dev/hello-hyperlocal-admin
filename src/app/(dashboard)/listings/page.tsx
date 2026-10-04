@@ -7,11 +7,7 @@ import {
   type LoveLocalOfferRow,
 } from "@/lib/listings";
 import { isPreviewMode } from "@/lib/preview-mode";
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreateListingDialog } from "./create-listing-dialog";
-import { BusinessTable } from "./business-table";
-import { ListingTableClient } from "./listing-table-client";
+import { ListingsClient } from "./listings-client";
 
 const SAMPLE_BUSINESSES: BusinessRow[] = [
   {
@@ -41,50 +37,21 @@ export default async function ListingsPage() {
     : await Promise.all([getBusinesses(), getMarketplaceListings(), getLoveLocalOffers()]);
 
   return (
-    <div className="min-w-0 space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">Businesses &amp; Listings</h1>
-          <p className="text-sm text-muted-foreground">
-            Oversight, deep inspection, and management of local businesses, marketplace ads, and Love Local specials.
-          </p>
-        </div>
-        <CreateListingDialog />
+    <div className="min-w-0 space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Businesses &amp; Listings
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Oversight, deep inspection, and management of local businesses, marketplace ads, and Love Local specials.
+        </p>
       </div>
 
-      <Tabs defaultValue="businesses" className="w-full">
-        <div className="overflow-x-auto pb-1">
-          <TabsList className="w-full sm:w-auto inline-flex">
-            <TabsTrigger value="businesses" className="flex-1 sm:flex-initial">
-              Businesses ({businesses.length})
-            </TabsTrigger>
-            <TabsTrigger value="marketplace" className="flex-1 sm:flex-initial">
-              Marketplace ({marketplace.length})
-            </TabsTrigger>
-            <TabsTrigger value="love-local" className="flex-1 sm:flex-initial">
-              Love Local ({loveLocal.length})
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="businesses" className="mt-4">
-          <Card className="py-0 overflow-hidden">
-            <BusinessTable businesses={businesses} />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="marketplace" className="mt-4">
-          <Card className="py-0 overflow-hidden">
-            <ListingTableClient table="marketplace_listings" listings={marketplace} />
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="love-local" className="mt-4">
-          <Card className="py-0 overflow-hidden">
-            <ListingTableClient table="love_local_offers" listings={loveLocal} />
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <ListingsClient
+        initialBusinesses={businesses}
+        initialMarketplace={marketplace}
+        initialLoveLocal={loveLocal}
+      />
     </div>
   );
 }
