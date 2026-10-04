@@ -29,13 +29,6 @@ export default function ListingsLoading() {
         ))}
       </div>
 
-      {/* Tabs Skeleton */}
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-32 rounded-lg" />
-        <Skeleton className="h-9 w-32 rounded-lg" />
-        <Skeleton className="h-9 w-32 rounded-lg" />
-      </div>
-
       {/* Table Section Skeleton */}
       <div className="space-y-4">
         {/* Table Toolbar */}

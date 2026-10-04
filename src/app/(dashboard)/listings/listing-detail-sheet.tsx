@@ -30,7 +30,7 @@ import {
   Clock,
   Star,
   ExternalLink,
-  Edit3,
+  Pencil,
   Trash2,
   Tag,
   ShoppingBag,
@@ -223,7 +223,7 @@ export function ListingDetailSheet({ item, open, onOpenChange }: Props) {
                   href={`/listings/business/${item.data.id}`}
                   onClick={() => onOpenChange(false)}
                 >
-                  <Edit3 className="size-4 mr-1.5" />
+                  <Pencil className="size-4 mr-1.5" />
                   Edit Full Details
                 </Link>
               </Button>

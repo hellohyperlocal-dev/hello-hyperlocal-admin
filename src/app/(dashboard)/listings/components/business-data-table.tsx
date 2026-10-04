@@ -19,7 +19,7 @@ import {
   ChevronDown,
   EllipsisVertical,
   Eye,
-  Edit3,
+  Pencil,
   Trash2,
   Download,
   Search,
@@ -331,7 +331,7 @@ export function BusinessDataTable({
               title="Edit business"
             >
               <Link href={`/listings/business/${b.id}`}>
-                <Edit3 className="size-4" />
+                <Pencil className="size-4" />
                 <span className="sr-only">Edit business</span>
               </Link>
             </Button>
@@ -350,7 +350,7 @@ export function BusinessDataTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild className="cursor-pointer">
                   <Link href={`/listings/business/${b.id}`}>
-                    <Edit3 className="mr-2 size-4" />
+                    <Pencil className="mr-2 size-4" />
                     Edit Business
                   </Link>
                 </DropdownMenuItem>
