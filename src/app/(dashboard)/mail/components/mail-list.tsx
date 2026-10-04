@@ -35,10 +35,12 @@ export function MailList({ items, onToggleStar }: MailListProps) {
             const snippet = lastMessage?.body_text || item.text;
 
             return (
-              <button
+              <div
                 key={item.id}
+                role="button"
+                tabIndex={0}
                 className={cn(
-                  "hover:bg-accent hover:text-accent-foreground flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all cursor-pointer relative group",
+                  "hover:bg-accent hover:text-accent-foreground flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all cursor-pointer relative group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                   mail.selected === item.id && "bg-muted border-primary/40",
                   isUnread && "bg-primary/[0.02] border-foreground/20 font-medium"
                 )}
@@ -48,6 +50,15 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                     selected: item.id,
                   })
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setMail({
+                      ...mail,
+                      selected: item.id,
+                    });
+                  }
+                }}
               >
                 <div className="flex w-full flex-col gap-1">
                   <div className="flex items-center justify-between gap-2">
@@ -116,7 +127,7 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                     ))}
                   </div>
                 ) : null}
-              </button>
+              </div>
             );
           })
         )}
