@@ -4,7 +4,6 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
@@ -26,23 +25,28 @@ export function RegistrationDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <div className="flex items-center gap-3">
-            <SheetTitle className="text-xl">{user.name}</SheetTitle>
-            <Badge variant="outline">{user.role}</Badge>
+      <SheetContent
+        side="right"
+        className="w-full sm:w-[500px] data-[side=right]:sm:w-[500px] data-[side=right]:!max-w-[500px] p-0 flex flex-col h-full overflow-hidden"
+      >
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+          <div className="flex flex-col gap-1.5 pr-8">
+            <div className="flex items-center gap-3">
+              <SheetTitle className="text-xl font-bold">{user.name}</SheetTitle>
+              <Badge variant="outline">{user.role}</Badge>
+            </div>
+            <SheetDescription className="break-all">{user.email}</SheetDescription>
           </div>
-          <SheetDescription>{user.email}</SheetDescription>
-        </SheetHeader>
 
-        <div className="space-y-6 py-6 text-sm">
+          <Separator />
+
           <div className="space-y-3">
             <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider text-muted-foreground">
               Contact Information
             </h4>
             <div className="grid grid-cols-3 gap-2">
               <span className="text-muted-foreground">Email:</span>
-              <span className="col-span-2 font-medium">{user.email}</span>
+              <span className="col-span-2 font-medium break-all">{user.email}</span>
 
               <span className="text-muted-foreground">Mobile:</span>
               <span className="col-span-2">{user.mobile || "Not provided"}</span>
