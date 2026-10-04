@@ -40,7 +40,7 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                 role="button"
                 tabIndex={0}
                 className={cn(
-                  "hover:bg-accent hover:text-accent-foreground flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all cursor-pointer relative group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                  "hover:bg-accent hover:text-accent-foreground flex flex-col items-start gap-2 rounded-lg border p-3 text-left text-sm transition-all cursor-pointer relative group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring w-full min-w-0",
                   mail.selected === item.id && "bg-muted border-primary/40",
                   isUnread && "bg-primary/[0.02] border-foreground/20 font-medium"
                 )}
@@ -60,9 +60,9 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                   }
                 }}
               >
-                <div className="flex w-full flex-col gap-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                <div className="flex w-full flex-col gap-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <div className="font-semibold truncate text-xs sm:text-sm">
                         {item.name}
                       </div>
@@ -103,8 +103,8 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-foreground truncate">
+                  <div className="flex items-center gap-2 w-full min-w-0">
+                    <span className="text-xs font-medium text-foreground truncate flex-1 min-w-0">
                       {item.subject}
                     </span>
                     {item.status === "replied" && (
@@ -115,7 +115,7 @@ export function MailList({ items, onToggleStar }: MailListProps) {
                     )}
                   </div>
                 </div>
-                <div className="text-muted-foreground line-clamp-2 text-xs leading-relaxed">
+                <div className="text-muted-foreground line-clamp-2 text-xs leading-relaxed w-full break-words">
                   {snippet.substring(0, 300)}
                 </div>
                 {item.labels.length ? (

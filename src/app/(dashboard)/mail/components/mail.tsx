@@ -229,7 +229,7 @@ export function Mail({
         orientation="horizontal"
         className="h-full items-stretch rounded-lg border overflow-hidden"
       >
-        <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+        <ResizablePanel defaultSize="20%" minSize="15%" maxSize="25%">
           <div className="flex h-[52px] items-center px-2">
             <AccountSwitcher
               isCollapsed={false}
@@ -332,7 +332,7 @@ export function Mail({
           />
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={35} minSize={28}>
+        <ResizablePanel defaultSize="40%" minSize="30%">
           <Tabs defaultValue="all" className="flex flex-col h-full m-0 gap-0">
             <div className="flex h-[52px] items-center px-4">
               <h1 className="text-foreground text-xl font-bold">
@@ -369,7 +369,7 @@ export function Mail({
           </Tabs>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={45} minSize={30}>
+        <ResizablePanel defaultSize="40%" minSize="30%">
           <MailDisplay
             mail={currentSelectedMail}
             activeAccount={selectedAccount}
