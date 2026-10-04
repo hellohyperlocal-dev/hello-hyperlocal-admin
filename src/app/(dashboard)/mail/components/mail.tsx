@@ -29,6 +29,8 @@ import { useMail } from "../use-mail"
 import { Button } from "@/components/ui/button"
 import { updateThreadStateAction } from "../actions"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+import { MailComposeDialog } from "./mail-compose-dialog"
 
 interface MailProps {
   accounts: Account[];
@@ -58,11 +60,13 @@ export function Mail({
   accounts,
   mails: initialMails,
 }: MailProps) {
+  const router = useRouter();
   const [mail, setMail] = useMail();
   const [mailList, setMailList] = React.useState<Mail[]>(initialMails);
   const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
   const [selectedFolder, setSelectedFolder] = React.useState<string>("inbox");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
+  const [composeOpen, setComposeOpen] = React.useState<boolean>(false);
 
   // Sync if initialMails changes from server revalidation
   React.useEffect(() => {
@@ -236,7 +240,10 @@ export function Mail({
           </div>
           <Separator className="mx-0" />
           <div className="m-3">
-            <Button className="w-full cursor-pointer">
+            <Button
+              className="w-full cursor-pointer"
+              onClick={() => setComposeOpen(true)}
+            >
               Compose
               <Send className="size-4" />
             </Button>
@@ -371,6 +378,17 @@ export function Mail({
           />
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      <MailComposeDialog
+        open={composeOpen}
+        onOpenChange={setComposeOpen}
+        accounts={accounts}
+        defaultFromEmail={selectedAccount.email}
+        onThreadCreated={(newThreadId) => {
+          setMail({ selected: newThreadId });
+          router.refresh();
+        }}
+      />
     </TooltipProvider>
   );
 }
