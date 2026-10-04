@@ -180,9 +180,9 @@ export function OffersDataTable({
         const item = row.original
         return (
           <div className="flex items-center gap-3 min-w-[200px]">
-            <Avatar className="h-9 w-9 rounded-md border shrink-0">
+            <Avatar className="size-9 shrink-0">
               {item.image_url && <AvatarImage src={item.image_url} alt={item.title} />}
-              <AvatarFallback className="rounded-md text-xs font-semibold bg-muted text-muted-foreground">
+              <AvatarFallback className="text-xs font-semibold">
                 <Tag className="size-4" />
               </AvatarFallback>
             </Avatar>

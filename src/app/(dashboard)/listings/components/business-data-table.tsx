@@ -198,9 +198,9 @@ export function BusinessDataTable({
 
         return (
           <div className="flex items-center gap-3 min-w-[200px]">
-            <Avatar className="h-9 w-9 rounded-md border shrink-0">
+            <Avatar className="size-9 shrink-0">
               {b.image_url && <AvatarImage src={b.image_url} alt={b.name} />}
-              <AvatarFallback className="rounded-md text-xs font-semibold bg-muted text-muted-foreground">
+              <AvatarFallback className="text-xs font-semibold">
                 {initials || <Store className="size-4" />}
               </AvatarFallback>
             </Avatar>
