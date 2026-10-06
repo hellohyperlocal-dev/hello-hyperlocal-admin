@@ -39,6 +39,8 @@ const userFormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
+  mobile: z.string().optional(),
+  businessName: z.string().optional(),
   role: z.string().min(1, {
     message: "Please select a role.",
   }),
@@ -67,6 +69,8 @@ export function UserFormDialog({ onAddUser }: UserFormDialogProps) {
     defaultValues: {
       name: "",
       email: "",
+      mobile: "",
+      businessName: "",
       role: "Founding Neighbour",
       category: "Resident",
       suburb: "Linden",
@@ -110,14 +114,42 @@ export function UserFormDialog({ onAddUser }: UserFormDialogProps) {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="e.g. name@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="mobile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone / Mobile</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="e.g. 082 123 4567" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="email"
+              name="businessName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Business Name (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter email address" {...field} />
+                    <Input placeholder="e.g. Acme Coffee (if business registration)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

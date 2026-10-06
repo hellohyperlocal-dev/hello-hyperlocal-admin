@@ -27,6 +27,7 @@ export interface BusinessRow {
   latitude?: number | null;
   longitude?: number | null;
   also_in_marketplace?: boolean;
+  phone?: string | null;
   created_at: string;
 }
 

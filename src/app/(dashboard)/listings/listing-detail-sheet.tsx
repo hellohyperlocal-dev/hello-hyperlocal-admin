@@ -38,6 +38,9 @@ import {
   Sparkles,
   Power,
   Globe,
+  Phone,
+  MessageCircle,
+  Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -243,6 +246,14 @@ export function ListingDetailSheet({ item, open, onOpenChange }: Props) {
   );
 }
 
+function getWhatsAppUrl(phone: string) {
+  let cleaned = phone.replace(/\D/g, "");
+  if (cleaned.startsWith("0")) {
+    cleaned = "27" + cleaned.slice(1);
+  }
+  return `https://wa.me/${cleaned}`;
+}
+
 function BusinessContent({
   business,
   onToggleOpen,
@@ -337,6 +348,71 @@ function BusinessContent({
             )}
           </div>
         </div>
+
+        {/* Phone / Mobile */}
+        {business.phone && (
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 shrink-0">
+              <Phone className="size-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-medium text-muted-foreground">Phone / Mobile</div>
+              <div className="flex flex-col gap-2 mt-0.5">
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`tel:${business.phone}`}
+                    className="font-mono text-sm font-semibold hover:underline text-foreground inline-flex items-center gap-1.5"
+                  >
+                    {business.phone}
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="cursor-pointer"
+                    title="Copy phone number"
+                    onClick={() => {
+                      navigator.clipboard.writeText(business.phone!)
+                      toast.success("Phone number copied to clipboard.")
+                    }}
+                  >
+                    <Copy className="size-3 text-muted-foreground" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 cursor-pointer"
+                    asChild
+                  >
+                    <a href={`tel:${business.phone}`}>
+                      <Phone className="size-3 text-emerald-600" />
+                      Call
+                    </a>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs gap-1.5 cursor-pointer"
+                    asChild
+                  >
+                    <a
+                      href={getWhatsAppUrl(business.phone)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <MessageCircle className="size-3 text-emerald-600" />
+                      WhatsApp
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Operating Hours */}
         <div className="flex items-start gap-3">

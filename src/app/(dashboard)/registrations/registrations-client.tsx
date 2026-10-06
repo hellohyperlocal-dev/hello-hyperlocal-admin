@@ -28,6 +28,8 @@ export function RegistrationsClient({ initialUsers, initialCounts }: Registratio
       id: `manual-${Date.now()}`,
       name: userData.name,
       email: userData.email,
+      mobile: userData.mobile?.trim() || null,
+      businessName: userData.businessName?.trim() || null,
       avatar: generateAvatar(userData.name),
       role: userData.role,
       rawRole,

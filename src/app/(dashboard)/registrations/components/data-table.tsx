@@ -22,6 +22,8 @@ import {
   Trash2,
   Download,
   Search,
+  Phone,
+  Store,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -157,21 +159,49 @@ export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTa
     },
     {
       accessorKey: "name",
-      header: "User",
+      header: "User / Business",
       cell: ({ row }) => {
         const user = row.original
+        const isBusiness = user.category === "Business" || Boolean(user.businessName)
         return (
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-8 w-8 shrink-0">
               <AvatarFallback className="text-xs font-medium">
                 {user.avatar}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="font-medium">{user.name}</span>
-              <span className="text-sm text-muted-foreground">{user.email}</span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-medium text-foreground truncate">{user.name}</span>
+              {isBusiness && user.businessName && user.businessName !== user.name && (
+                <span className="text-xs text-primary font-medium truncate flex items-center gap-1">
+                  <Store className="size-3 shrink-0" />
+                  {user.businessName}
+                </span>
+              )}
+              <span className="text-xs text-muted-foreground truncate">{user.email}</span>
             </div>
           </div>
+        )
+      },
+    },
+    {
+      accessorKey: "mobile",
+      header: "Phone",
+      cell: ({ row }) => {
+        const mobile = row.original.mobile
+        if (!mobile) {
+          return <span className="text-xs text-muted-foreground/50 italic">—</span>
+        }
+        return (
+          <a
+            href={`tel:${mobile}`}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground hover:text-primary hover:underline transition-colors group whitespace-nowrap"
+            onClick={(e) => e.stopPropagation()}
+            title={`Call ${mobile}`}
+          >
+            <Phone className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+            <span className="font-mono tabular-nums">{mobile}</span>
+          </a>
         )
       },
     },
@@ -274,6 +304,18 @@ export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTa
                 >
                   Copy Email
                 </DropdownMenuItem>
+                {user.mobile && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.mobile!)
+                      toast.success("Phone number copied to clipboard.")
+                    }}
+                  >
+                    <Phone className="mr-2 size-4" />
+                    Copy Phone
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
@@ -296,6 +338,21 @@ export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTa
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    globalFilterFn: (row, _columnId, filterValue: string) => {
+      const search = (filterValue || "").toLowerCase().trim()
+      if (!search) return true
+      const u = row.original
+      const fields = [
+        u.name,
+        u.email,
+        u.mobile,
+        u.businessName,
+        u.role,
+        u.category,
+        u.suburb,
+      ]
+      return fields.some((field) => field && field.toLowerCase().includes(search))
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -327,14 +384,27 @@ export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTa
       return
     }
 
-    const headers = ["ID", "Name", "Email", "Role", "Category", "Suburb", "Status", "Joined"]
+    const headers = [
+      "ID",
+      "Name",
+      "Business Name",
+      "Email",
+      "Phone",
+      "Role",
+      "Category",
+      "Suburb",
+      "Status",
+      "Joined",
+    ]
     const csvContent = [
       headers.join(","),
       ...exportData.map((u) =>
         [
           `"${u.id}"`,
           `"${(u.name || "").replace(/"/g, '""')}"`,
+          `"${(u.businessName || "").replace(/"/g, '""')}"`,
           `"${(u.email || "").replace(/"/g, '""')}"`,
+          `"${(u.mobile || "").replace(/"/g, '""')}"`,
           `"${(u.role || "").replace(/"/g, '""')}"`,
           `"${(u.category || "").replace(/"/g, '""')}"`,
           `"${(u.suburb || "").replace(/"/g, '""')}"`,

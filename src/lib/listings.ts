@@ -5,11 +5,32 @@ export * from "./listings-types";
 
 export async function getBusinesses(): Promise<BusinessRow[]> {
   const admin = createAdminClient();
-  const { data } = await admin
-    .from("local_businesses")
-    .select("id, owner_id, name, category, description, address, hours, rating, review_count, is_open, image_url, video_url, latitude, longitude, also_in_marketplace, created_at")
-    .order("created_at", { ascending: false });
-  return (data as BusinessRow[]) ?? [];
+  const [{ data: businesses }, { data: registrations }] = await Promise.all([
+    admin
+      .from("local_businesses")
+      .select("id, owner_id, name, category, description, address, hours, rating, review_count, is_open, image_url, video_url, latitude, longitude, also_in_marketplace, created_at")
+      .order("created_at", { ascending: false }),
+    admin
+      .from("registrations")
+      .select("business_name, mobile")
+      .not("business_name", "is", null)
+      .not("mobile", "is", null),
+  ]);
+
+  const phoneMap = new Map<string, string>();
+  if (registrations) {
+    for (const reg of registrations) {
+      if (reg.business_name && reg.mobile) {
+        phoneMap.set(reg.business_name.toLowerCase().trim(), reg.mobile.trim());
+      }
+    }
+  }
+
+  const rawBusinesses = (businesses as BusinessRow[]) ?? [];
+  return rawBusinesses.map((b) => ({
+    ...b,
+    phone: phoneMap.get(b.name.toLowerCase().trim()) ?? null,
+  }));
 }
 
 export async function getBusinessById(id: string): Promise<BusinessRow | null> {
@@ -21,7 +42,21 @@ export async function getBusinessById(id: string): Promise<BusinessRow | null> {
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as BusinessRow;
+  const business = data as BusinessRow;
+
+  // Look up matching registration phone
+  const { data: reg } = await admin
+    .from("registrations")
+    .select("mobile")
+    .ilike("business_name", business.name.trim())
+    .not("mobile", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  return {
+    ...business,
+    phone: reg?.mobile ?? null,
+  };
 }
 
 export async function getMarketplaceListings(): Promise<ListingRow[]> {

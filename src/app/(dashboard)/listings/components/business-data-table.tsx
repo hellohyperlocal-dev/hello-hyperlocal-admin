@@ -28,6 +28,7 @@ import {
   MapPin,
   Power,
   Store,
+  Phone,
 } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -237,6 +238,27 @@ export function BusinessDataTable({
       filterFn: exactFilter,
     },
     {
+      accessorKey: "phone",
+      header: "Phone",
+      cell: ({ row }) => {
+        const phone = row.original.phone
+        if (!phone) {
+          return <span className="text-xs text-muted-foreground/50 italic">—</span>
+        }
+        return (
+          <a
+            href={`tel:${phone}`}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-medium text-foreground hover:text-primary hover:underline transition-colors group whitespace-nowrap"
+            onClick={(e) => e.stopPropagation()}
+            title={`Call ${phone}`}
+          >
+            <Phone className="size-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+            <span className="font-mono tabular-nums">{phone}</span>
+          </a>
+        )
+      },
+    },
+    {
       accessorKey: "hours",
       header: "Hours",
       cell: ({ row }) => {
@@ -358,6 +380,18 @@ export function BusinessDataTable({
                   <Power className="mr-2 size-4" />
                   Mark as {b.is_open ? "Closed" : "Open"}
                 </DropdownMenuItem>
+                {b.phone && (
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => {
+                      navigator.clipboard.writeText(b.phone!)
+                      toast.success("Phone number copied to clipboard.")
+                    }}
+                  >
+                    <Phone className="mr-2 size-4" />
+                    Copy Phone
+                  </DropdownMenuItem>
+                )}
                 {b.address && (
                   <DropdownMenuItem
                     className="cursor-pointer"
@@ -399,16 +433,19 @@ export function BusinessDataTable({
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: (row, _columnId, filterValue) => {
-      const search = filterValue.toLowerCase()
+      const search = (filterValue || "").toLowerCase().trim()
+      if (!search) return true
       const name = (row.original.name || "").toLowerCase()
       const category = (row.original.category || "").toLowerCase()
       const address = (row.original.address || "").toLowerCase()
       const desc = (row.original.description || "").toLowerCase()
+      const phone = (row.original.phone || "").toLowerCase()
       return (
         name.includes(search) ||
         category.includes(search) ||
         address.includes(search) ||
-        desc.includes(search)
+        desc.includes(search) ||
+        phone.includes(search)
       )
     },
     state: {
@@ -439,6 +476,7 @@ export function BusinessDataTable({
       "ID",
       "Name",
       "Category",
+      "Phone",
       "Address",
       "Rating",
       "Review Count",
@@ -453,12 +491,13 @@ export function BusinessDataTable({
           `"${b.id}"`,
           `"${(b.name || "").replace(/"/g, '""')}"`,
           `"${(b.category || "").replace(/"/g, '""')}"`,
+          `"${(b.phone || "").replace(/"/g, '""')}"`,
           `"${(b.address || "").replace(/"/g, '""')}"`,
           `"${b.rating.toFixed(1)}"`,
           `"${b.review_count}"`,
           `"${(b.hours || "").replace(/"/g, '""')}"`,
           `"${b.is_open ? "Open" : "Closed"}"`,
-          `"${b.created_at || ""}"`,
+          `"${(b.created_at || "").replace(/"/g, '""')}"`,
         ].join(",")
       ),
     ].join("\n")
