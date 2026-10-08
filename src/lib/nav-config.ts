@@ -10,6 +10,9 @@ import {
   Megaphone,
   Settings,
   Mail,
+  FileText,
+  Archive,
+  Clock3,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,18 +43,26 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    title: "Community & Content",
+    title: "Community",
     items: [
       { href: "/registrations", label: "Registrations", icon: Inbox },
       { href: "/listings", label: "Businesses & Listings", icon: Store },
-      { href: "/moderation", label: "Moderation", icon: ShieldCheck },
-      { href: "/ward-updates", label: "Ward Updates", icon: Megaphone },
+      { href: "/users", label: "Users", icon: Users },
+    ],
+  },
+  {
+    title: "Content Studio",
+    items: [
+      { href: "/content", label: "All Posts", icon: FileText },
+      { href: "/content/drafts", label: "Drafts", icon: Archive },
+      { href: "/content/scheduled", label: "Scheduled", icon: Clock3 },
+      { href: "/content/ward-updates", label: "Ward Updates", icon: Megaphone },
+      { href: "/content/moderation", label: "Moderation", icon: ShieldCheck },
     ],
   },
   {
     title: "Directory & Team",
     items: [
-      { href: "/users", label: "Users", icon: Users },
       { href: "/councillors", label: "Ward Councillors", icon: UserCheck },
       { href: "/admin-team", label: "Admin Team", icon: UserCog },
     ],

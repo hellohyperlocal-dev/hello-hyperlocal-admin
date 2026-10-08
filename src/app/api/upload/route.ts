@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { getAdminUser } from '@/lib/auth';
 import { uploadImageToR2 } from '@/lib/r2';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await getAdminUser();
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Please sign in again.' },
+        { status: 401 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -18,9 +26,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
     }
 
-    // Max 10MB input check
-    if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Image must be under 10MB' }, { status: 400 });
+    // Max 25MB input check
+    if (file.size > 25 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Image must be under 25MB' }, { status: 400 });
     }
 
     const arrayBuffer = await file.arrayBuffer();

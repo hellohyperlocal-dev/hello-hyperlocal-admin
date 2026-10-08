@@ -157,7 +157,7 @@ export function AddWardUpdateDialog({ councillors }: Props) {
             <FileUploader
               folder="ward-updates"
               maxFiles={1}
-              maxSizeMB={10}
+              maxSizeMB={25}
               onUploadComplete={(urls) => setUploadedImageUrl(urls[0] || "")}
               onRemove={() => setUploadedImageUrl("")}
             />

@@ -16,7 +16,9 @@ export async function approveContent(table: ModerationTable, id: string): Promis
   if (error) return { error: error.message };
 
   await logActivity(admin.id, `${table}.approved`, table, id, {});
+  revalidatePath("/content/moderation");
   revalidatePath("/moderation");
+  revalidatePath("/content");
   return {};
 }
 
@@ -33,7 +35,9 @@ export async function rejectContent(table: ModerationTable, id: string, reason: 
   if (error) return { error: error.message };
 
   await logActivity(admin.id, `${table}.rejected`, table, id, { reason: reason.trim() });
+  revalidatePath("/content/moderation");
   revalidatePath("/moderation");
+  revalidatePath("/content");
   return {};
 }
 
@@ -49,7 +53,9 @@ export async function resolveReport(id: string, resolution: "resolved" | "dismis
   if (error) return { error: error.message };
 
   await logActivity(admin.id, `report.${resolution}`, "reports", id, {});
+  revalidatePath("/content/moderation");
   revalidatePath("/moderation");
+  revalidatePath("/content");
   return {};
 }
 

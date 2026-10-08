@@ -55,7 +55,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { UserFormDialog, type UserFormValues } from "./user-form-dialog"
+import type { UserFormValues } from "./user-form-dialog"
 import { RegistrationDetailSheet } from "./registration-detail-sheet"
 import { toast } from "sonner"
 
@@ -83,7 +83,7 @@ interface DataTableProps {
   users: RegistrationUser[]
   onDeleteUser: (id: string) => void
   onEditUser: (user: RegistrationUser) => void
-  onAddUser: (userData: UserFormValues) => void
+  onAddUser?: (userData: UserFormValues) => void
 }
 
 export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTableProps) {
@@ -445,7 +445,6 @@ export function DataTable({ users, onDeleteUser, onEditUser, onAddUser }: DataTa
             <Download className="mr-2 size-4" />
             Export
           </Button>
-          <UserFormDialog onAddUser={onAddUser} />
         </div>
       </div>
 

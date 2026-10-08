@@ -19,6 +19,42 @@ const PREVIEW_ADMIN: AdminProfile = {
 };
 
 /**
+ * Safe admin verification for API route handlers and server endpoints.
+ * Returns the AdminProfile if the user has an active session and admin role,
+ * or null if unauthenticated / unauthorized.
+ * NEVER calls redirect() — safe to use in Route Handlers without throwing NEXT_REDIRECT.
+ */
+export async function getAdminUser(): Promise<AdminProfile | null> {
+  if (isPreviewMode) return PREVIEW_ADMIN;
+
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return null;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, role, avatar_url, first_login_verified_at")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin" || !profile.first_login_verified_at) {
+      return null;
+    }
+
+    return profile;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Server-side admin gate. Call at the top of every protected page/layout.
  * Redirects to /login if unauthenticated, or /access-denied (after signing the
  * user out) if authenticated but not role='admin'. Short-circuits entirely in
@@ -54,3 +90,4 @@ export async function requireAdmin(): Promise<AdminProfile> {
 
   return profile;
 }
+

@@ -34,7 +34,12 @@ function generateSecurePassword(): string {
   return pwd;
 }
 
-export function AddUserDialog() {
+interface AddUserDialogProps {
+  trigger?: React.ReactNode;
+  onSuccess?: () => void;
+}
+
+export function AddUserDialog({ trigger, onSuccess }: AddUserDialogProps = {}) {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<"resident" | "business">("resident");
   const [password, setPassword] = useState("");
@@ -64,15 +69,18 @@ export function AddUserDialog() {
       form.reset();
       setPassword("");
       setRole("resident");
+      onSuccess?.();
     });
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
-          <UserPlus className="size-4" /> Add user
-        </Button>
+        {trigger ?? (
+          <Button className="cursor-pointer gap-2">
+            <UserPlus className="size-4" /> Add New User
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>

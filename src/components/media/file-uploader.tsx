@@ -37,10 +37,83 @@ function formatBytes(bytes: number, decimals = 1) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
+async function compressImageClient(file: File, maxDimension = 1920, quality = 0.85): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif" || file.type === "image/svg+xml") {
+    return file;
+  }
+
+  if (file.size < 600 * 1024) {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      try {
+        let { width, height } = img;
+
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const outputType = file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg";
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              const compressedFile = new File([blob], file.name, {
+                type: blob.type || outputType,
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          outputType,
+          quality
+        );
+      } catch {
+        resolve(file);
+      }
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+
+    img.src = url;
+  });
+}
+
 export function FileUploader({
   folder = "uploads",
   maxFiles = 6,
-  maxSizeMB = 10,
+  maxSizeMB = 25,
   acceptedFileTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"],
   onUploadComplete,
   onRemove,
@@ -59,8 +132,10 @@ export function FileUploader({
 
   const uploadFile = async (item: MediaUploadItem) => {
     try {
+      const fileToUpload = await compressImageClient(item.file);
+
       const formData = new FormData();
-      formData.append("file", item.file);
+      formData.append("file", fileToUpload);
       formData.append("folder", folder);
 
       const progressInterval = setInterval(() => {
@@ -82,6 +157,9 @@ export function FileUploader({
       clearInterval(progressInterval);
 
       if (!res.ok) {
+        if (res.status === 401) {
+          throw new Error("Your session has expired. Please refresh the page and sign in again.");
+        }
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Upload failed");
       }

@@ -119,7 +119,7 @@ export function CreatePostDialog() {
             <FileUploader
               folder="community-posts"
               maxFiles={1}
-              maxSizeMB={10}
+              maxSizeMB={25}
               onUploadComplete={(urls) => setUploadedImageUrl(urls[0] || "")}
               onRemove={() => setUploadedImageUrl("")}
             />

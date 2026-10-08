@@ -54,6 +54,41 @@ export async function createWardUpdate(formData: FormData): Promise<{ error?: st
     councillorId,
   });
 
+  revalidatePath("/content/ward-updates");
   revalidatePath("/ward-updates");
+  revalidatePath("/content");
+  return {};
+}
+
+export async function deleteWardUpdate(id: string): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+  const { error } = await supabaseAdmin.from("ward_updates").delete().eq("id", id);
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, "ward_update.deleted", "ward_updates", id, {});
+  revalidatePath("/content/ward-updates");
+  revalidatePath("/ward-updates");
+  revalidatePath("/content");
+  return {};
+}
+
+export async function togglePinWardUpdate(id: string, currentPinned: boolean): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+  const { error } = await supabaseAdmin
+    .from("ward_updates")
+    .update({ is_pinned: !currentPinned })
+    .eq("id", id);
+  if (error) return { error: error.message };
+
+  await logActivity(admin.id, "ward_update.toggled_pin", "ward_updates", id, { pinned: !currentPinned });
+  revalidatePath("/content/ward-updates");
+  revalidatePath("/ward-updates");
+  revalidatePath("/content");
   return {};
 }

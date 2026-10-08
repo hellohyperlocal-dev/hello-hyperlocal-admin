@@ -4,6 +4,7 @@ export interface UserRow {
   id: string;
   role: string;
   full_name: string | null;
+  email?: string | null;
   phone_number: string | null;
   street_address: string | null;
   business_name: string | null;
@@ -12,6 +13,32 @@ export interface UserRow {
   suspended_at: string | null;
   suspended_reason: string | null;
   created_at: string;
+}
+
+export async function getAllUsers(): Promise<UserRow[]> {
+  const admin = createAdminClient();
+  const [{ data: profiles }, authResult] = await Promise.all([
+    admin
+      .from("profiles")
+      .select(
+        "id, role, full_name, phone_number, street_address, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at"
+      )
+      .order("created_at", { ascending: false }),
+    admin.auth.admin.listUsers({ perPage: 1000 }).catch(() => ({ data: { users: [] } })),
+  ]);
+
+  const emailMap = new Map<string, string>();
+  if (authResult?.data?.users) {
+    for (const u of authResult.data.users) {
+      if (u.email) emailMap.set(u.id, u.email);
+    }
+  }
+
+  const rawProfiles = (profiles as UserRow[]) ?? [];
+  return rawProfiles.map((p) => ({
+    ...p,
+    email: emailMap.get(p.id) ?? null,
+  }));
 }
 
 const PAGE_SIZE = 25;

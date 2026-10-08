@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
+import { getAdminUser } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isPreviewMode } from "@/lib/preview-mode";
 
@@ -38,7 +38,10 @@ function escapeCsvField(val: unknown): string {
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const admin = await getAdminUser();
+    if (!admin) {
+      return NextResponse.json({ error: "Unauthorized. Please sign in again." }, { status: 401 });
+    }
 
     let rows: RegistrationExportRow[] = [];
 

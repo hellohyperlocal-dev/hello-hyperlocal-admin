@@ -61,7 +61,10 @@ export function AppSidebar({ adminName, adminAvatarUrl }: Props) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
-                  const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                  const isExactOnly = item.href === "/" || item.href === "/content";
+                  const isActive = isExactOnly
+                    ? pathname === item.href
+                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
                   return (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
