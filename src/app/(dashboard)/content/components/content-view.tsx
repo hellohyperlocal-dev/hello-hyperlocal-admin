@@ -163,11 +163,14 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
   async function handleCreateSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
+    const submitter = (e.nativeEvent as SubmitEvent)?.submitter as HTMLButtonElement | null;
+    const isDraft = submitter?.value === "draft" || statusVal === "Save draft";
     const formData = new FormData(form);
+
     formData.set("postType", postType);
     formData.set("category", category);
     formData.set("imageUrl", uploadedImageUrl);
-    formData.set("status", statusVal === "Save draft" ? "draft" : "published");
+    formData.set("status", isDraft ? "draft" : "published");
     formData.set("isPinned", isPinned ? "true" : "false");
 
     startCreateTransition(async () => {
@@ -176,7 +179,7 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
         toast.error(res.error);
         return;
       }
-      toast.success(statusVal === "Save draft" ? "Draft saved successfully." : "Post published successfully.");
+      toast.success(isDraft ? "Draft saved successfully." : "Post published successfully.");
       setIsCreating(false);
       setUploadedImageUrl("");
       form.reset();
@@ -215,13 +218,11 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
             </p>
           </div>
           <Button
-            type="button"
+            type="submit"
+            form="create-post-form"
+            name="submitAction"
+            value="draft"
             variant="outline"
-            onClick={() => {
-              setStatusVal("Save draft");
-              const form = document.getElementById("create-post-form") as HTMLFormElement | null;
-              if (form) form.requestSubmit();
-            }}
             disabled={createPending}
           >
             Save draft
