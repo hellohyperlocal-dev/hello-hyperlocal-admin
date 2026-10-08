@@ -27,11 +27,13 @@ interface ContentRow {
 interface ReportRow {
   id: string;
   post_id: string;
+  comment_id?: string | null;
   reporter_id: string;
   reason: string | null;
   status: string;
   created_at: string;
   community_posts: { title: string; content: string } | null;
+  post_comments?: { id: string; content: string; author_id: string } | null;
 }
 
 export interface ModerationDetail {
@@ -197,6 +199,8 @@ export interface ModerationQueueItem {
   price?: string | null;
   reportReason?: string | null;
   reportedPostContent?: string | null;
+  reportTarget?: "post" | "comment";
+  commentId?: string | null;
 }
 
 export interface ModerationDashboardData {
@@ -264,10 +268,11 @@ const SAMPLE_MODERATION_ITEMS: ModerationQueueItem[] = [
   {
     id: "sample-mod-3",
     kind: "reports",
+    reportTarget: "post",
     title: "Reported: Unsolicited business advertisement in general chat",
     excerpt: "User reported spam marketing posted in the neighborhood lost-found section.",
     content: "Multiple users reported this post for violating rules on commercial spam.",
-    category: "Community Report",
+    category: "Flagged Report",
     authorName: "Reported by Mark D.",
     authorId: null,
     authorAvatar: null,
@@ -276,6 +281,24 @@ const SAMPLE_MODERATION_ITEMS: ModerationQueueItem[] = [
     rawDate: new Date(Date.now() - 172800000).toISOString(),
     reportReason: "Unsolicited crypto investment scheme posted in pet group.",
     reportedPostContent: "Make 200% return in 3 days! WhatsApp me now on 082-XXX-XXXX for easy money.",
+  },
+  {
+    id: "sample-mod-4",
+    kind: "reports",
+    reportTarget: "comment",
+    commentId: "sample-comment-1",
+    title: "Flagged Comment on \"Load shedding schedule\"",
+    excerpt: "Reason: Harassment / abusive personal attacks against another resident.",
+    content: "Keep quiet you don't know anything about Linden, mind your own business.",
+    category: "Reported Comment",
+    authorName: "Reported by Lerato K.",
+    authorId: null,
+    authorAvatar: null,
+    initials: "LK",
+    date: "Oct 08, 2026",
+    rawDate: new Date(Date.now() - 3600000 * 2).toISOString(),
+    reportReason: "Harassment / abusive personal attacks against another resident.",
+    reportedPostContent: "Keep quiet you don't know anything about Linden, mind your own business.",
   },
 ];
 

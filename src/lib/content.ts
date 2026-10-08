@@ -315,3 +315,72 @@ export async function getContentData(): Promise<CmsContentData> {
     },
   };
 }
+
+export interface PostCommentItem {
+  id: string;
+  postId: string;
+  authorId: string | null;
+  authorName: string;
+  authorAvatar: string | null;
+  initials: string;
+  content: string;
+  createdAt: string;
+  date: string;
+}
+
+export async function fetchPostComments(postId: string): Promise<PostCommentItem[]> {
+  const { isPreviewMode } = await import("@/lib/preview-mode");
+  if (isPreviewMode) {
+    return [
+      {
+        id: "mock-comment-1",
+        postId,
+        authorId: "mock-user-1",
+        authorName: "Sarah Jenkins",
+        authorAvatar: null,
+        initials: "SJ",
+        content: "Will there be secure parking available near 4th Avenue?",
+        createdAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        date: "3 hours ago",
+      },
+      {
+        id: "mock-comment-2",
+        postId,
+        authorId: "mock-user-2",
+        authorName: "David Miller",
+        authorAvatar: null,
+        initials: "DM",
+        content: "Yes, the library grounds will have CPF-marshalled parking all morning.",
+        createdAt: new Date(Date.now() - 3600000 * 1).toISOString(),
+        date: "1 hour ago",
+      },
+    ];
+  }
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("post_comments")
+    .select("id, post_id, author_id, content, created_at, profiles!author_id(full_name, avatar_url)")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data.map((c: any) => {
+    const authorName = c.profiles?.full_name || "Community Resident";
+    return {
+      id: c.id,
+      postId: c.post_id,
+      authorId: c.author_id,
+      authorName,
+      authorAvatar: c.profiles?.avatar_url || null,
+      initials: getInitials(authorName),
+      content: c.content || "",
+      createdAt: c.created_at,
+      date: formatDate(c.created_at),
+    };
+  });
+}
+

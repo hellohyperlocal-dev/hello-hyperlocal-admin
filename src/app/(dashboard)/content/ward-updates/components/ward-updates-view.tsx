@@ -24,8 +24,18 @@ import {
   Info,
   Clock,
   PinOff,
+  ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  type ColumnDef,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,17 +151,243 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
 
   const distinctWards = Array.from(new Set(items.map((i) => i.ward))).filter(Boolean);
 
-  const filteredItems = items.filter((item) => {
-    if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
-    if (wardFilter !== "all" && item.ward !== wardFilter) return false;
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.body.toLowerCase().includes(q) ||
-      item.councillorName.toLowerCase().includes(q) ||
-      item.ward.toLowerCase().includes(q)
-    );
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) => {
+      if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
+      if (wardFilter !== "all" && item.ward !== wardFilter) return false;
+      if (!query.trim()) return true;
+      const q = query.toLowerCase();
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.body.toLowerCase().includes(q) ||
+        item.councillorName.toLowerCase().includes(q) ||
+        item.ward.toLowerCase().includes(q)
+      );
+    });
+  }, [items, categoryFilter, wardFilter, query]);
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+
+  const columns = React.useMemo<ColumnDef<WardUpdateItem>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Broadcast Notice
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          const cat = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.notice;
+          const CatIcon = cat.icon;
+          return (
+            <div className="flex items-center gap-3 min-w-0 max-w-[400px]">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="size-10 shrink-0 rounded-lg object-cover border border-border/50"
+                />
+              ) : (
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                  <CatIcon className="size-5" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  {item.isPinned && <Pin className="size-3.5 text-primary shrink-0" />}
+                  <span className="truncate">{item.title}</span>
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.body.slice(0, 100)}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "category",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Category
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const cat = CATEGORY_CONFIG[row.original.category] || CATEGORY_CONFIG.notice;
+          return (
+            <Badge variant="outline" className={`font-normal text-xs ${cat.color}`}>
+              {cat.label}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: "ward",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Ward
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <Badge variant="secondary" className="font-mono text-xs">
+            {row.original.ward}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "councillorName",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Councillor
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="flex items-center gap-2 min-w-0">
+              <Avatar className="size-7 border border-border/50">
+                {item.councillorAvatar && <AvatarImage src={item.councillorAvatar} />}
+                <AvatarFallback className="text-[10px] bg-muted font-medium">{item.initials}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-foreground">{item.councillorName}</p>
+                {item.councillorId && (
+                  <Link
+                    href={`/users/${item.councillorId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    Profile <ExternalLink className="size-2.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "reactions",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Engagement
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Heart className="size-3.5 text-rose-500/80 fill-rose-500/20" />
+            <span className="font-medium text-foreground">{row.original.reactions}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "date",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {row.original.date}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="text-right block w-full text-xs font-semibold pr-2">Actions</span>,
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="text-right" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-8">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSelectedItem(item)}>
+                    <Eye className="size-4 mr-2" /> View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleTogglePin(item)}>
+                    {item.isPinned ? (
+                      <>
+                        <PinOff className="size-4 mr-2" /> Unpin from feed
+                      </>
+                    ) : (
+                      <>
+                        <Pin className="size-4 mr-2" /> Pin to feed top
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setDeletingItem(item)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="size-4 mr-2" /> Delete Update
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    state: {
+      sorting,
+      pagination,
+    },
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const handleCreateSubmit = (e: React.FormEvent) => {
@@ -310,32 +546,46 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
 
         <div className="flex items-center gap-2 flex-wrap">
           {/* Category Filter */}
-          <select
+          <Select
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-9 rounded-lg border border-input bg-background px-3 text-xs sm:text-sm font-medium"
+            onValueChange={(val) => {
+              setCategoryFilter(val);
+              table.setPageIndex(0);
+            }}
           >
-            <option value="all">All Categories</option>
-            <option value="notice">General Notice</option>
-            <option value="water">Water Outage</option>
-            <option value="load-shedding">Load-Shedding</option>
-            <option value="road-closure">Road Closure</option>
-            <option value="safety">Public Safety</option>
-          </select>
+            <SelectTrigger className="h-9 w-[150px] text-xs sm:text-sm font-medium cursor-pointer">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent side="top">
+              <SelectItem value="all" className="text-xs sm:text-sm cursor-pointer">All Categories</SelectItem>
+              <SelectItem value="notice" className="text-xs sm:text-sm cursor-pointer">General Notice</SelectItem>
+              <SelectItem value="water" className="text-xs sm:text-sm cursor-pointer">Water Outage</SelectItem>
+              <SelectItem value="load-shedding" className="text-xs sm:text-sm cursor-pointer">Load-Shedding</SelectItem>
+              <SelectItem value="road-closure" className="text-xs sm:text-sm cursor-pointer">Road Closure</SelectItem>
+              <SelectItem value="safety" className="text-xs sm:text-sm cursor-pointer">Public Safety</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Ward Filter */}
-          <select
+          <Select
             value={wardFilter}
-            onChange={(e) => setWardFilter(e.target.value)}
-            className="h-9 rounded-lg border border-input bg-background px-3 text-xs sm:text-sm font-medium"
+            onValueChange={(val) => {
+              setWardFilter(val);
+              table.setPageIndex(0);
+            }}
           >
-            <option value="all">All Wards</option>
-            {distinctWards.map((w) => (
-              <option key={w} value={w}>
-                {w}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="h-9 w-[130px] text-xs sm:text-sm font-medium cursor-pointer">
+              <SelectValue placeholder="All Wards" />
+            </SelectTrigger>
+            <SelectContent side="top">
+              <SelectItem value="all" className="text-xs sm:text-sm cursor-pointer">All Wards</SelectItem>
+              {distinctWards.map((w) => (
+                <SelectItem key={w} value={w} className="text-xs sm:text-sm cursor-pointer">
+                  {w}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* View Mode Toggle */}
           <Button
@@ -356,100 +606,29 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
           No ward updates found matching your criteria.
         </div>
       ) : isGrid ? (
-        /* GRID VIEW */
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filteredItems.map((item) => {
-            const cat = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.notice;
-            const CatIcon = cat.icon;
+        /* GRID VIEW (using paginated rows) */
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {table.getRowModel().rows.map((row) => {
+              const item = row.original;
+              const cat = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.notice;
+              const CatIcon = cat.icon;
 
-            return (
-              <Card
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="cursor-pointer border-border/60 hover:border-primary/50 transition-all hover:shadow-xs group"
-              >
-                <CardContent className="flex flex-col gap-3 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      {item.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.imageUrl}
-                          alt={item.title}
-                          className="size-10 rounded-lg object-cover border border-border/50 shrink-0"
-                        />
-                      ) : (
-                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-                          <CatIcon className="size-5" />
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{item.councillorName}</p>
-                        <p className="text-[11px] text-muted-foreground">{item.date}</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline" className="font-mono text-[10px] shrink-0">
-                      {item.ward}
-                    </Badge>
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors flex items-center gap-1.5">
-                      {item.isPinned && <Pin className="size-3.5 text-primary shrink-0" />}
-                      <span className="truncate">{item.title}</span>
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{item.body}</p>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
-                    <Badge variant="outline" className={`font-normal text-[11px] ${cat.color}`}>
-                      {cat.label}
-                    </Badge>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Heart className="size-3.5 text-rose-500 fill-rose-500/20" />
-                      <span className="font-medium text-foreground">{item.reactions}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-        /* TABLE VIEW - SINGLE CLEAN BORDER MATCHING CODEBASE */
-        <div className="rounded-md border bg-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="min-w-[320px]">Broadcast Notice</TableHead>
-                <TableHead className="w-[150px]">Category</TableHead>
-                <TableHead className="w-[110px]">Ward</TableHead>
-                <TableHead className="w-[180px]">Councillor</TableHead>
-                <TableHead className="w-[110px]">Engagement</TableHead>
-                <TableHead className="w-[120px]">Date</TableHead>
-                <TableHead className="w-[50px] text-right"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map((item) => {
-                const cat = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG.notice;
-                const CatIcon = cat.icon;
-
-                return (
-                  <TableRow
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  >
-                    {/* Notice Title and Excerpt */}
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3 min-w-0">
+              return (
+                <Card
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className="cursor-pointer border-border/60 hover:border-primary/50 transition-all hover:shadow-xs group"
+                >
+                  <CardContent className="flex flex-col gap-3 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         {item.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={item.imageUrl}
                             alt={item.title}
-                            className="size-10 shrink-0 rounded-lg object-cover border border-border/50"
+                            className="size-10 rounded-lg object-cover border border-border/50 shrink-0"
                           />
                         ) : (
                           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
@@ -457,102 +636,177 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground flex items-center gap-1.5">
-                            {item.isPinned && <Pin className="size-3.5 text-primary shrink-0" />}
-                            <span className="truncate">{item.title}</span>
-                          </p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.body}</p>
+                          <p className="text-xs font-medium text-foreground truncate">{item.councillorName}</p>
+                          <p className="text-[11px] text-muted-foreground">{item.date}</p>
                         </div>
                       </div>
-                    </TableCell>
-
-                    {/* Category */}
-                    <TableCell>
-                      <Badge variant="outline" className={`font-normal text-xs ${cat.color}`}>
-                        {cat.label}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Ward */}
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono text-xs">
+                      <Badge variant="outline" className="font-mono text-[10px] shrink-0">
                         {item.ward}
                       </Badge>
-                    </TableCell>
+                    </div>
 
-                    {/* Councillor */}
-                    <TableCell>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Avatar className="size-7 border border-border/50">
-                          {item.councillorAvatar && <AvatarImage src={item.councillorAvatar} />}
-                          <AvatarFallback className="text-[10px] bg-muted font-medium">{item.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-medium text-foreground">{item.councillorName}</p>
-                          {item.councillorId && (
-                            <Link
-                              href={`/users/${item.councillorId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                            >
-                              Profile <ExternalLink className="size-2.5" />
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors flex items-center gap-1.5">
+                        {item.isPinned && <Pin className="size-3.5 text-primary shrink-0" />}
+                        <span className="truncate">{item.title}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{item.body}</p>
+                    </div>
 
-                    {/* Engagement / Reactions */}
-                    <TableCell>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                      <Badge variant="outline" className={`font-normal text-[11px] ${cat.color}`}>
+                        {cat.label}
+                      </Badge>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Heart className="size-3.5 text-rose-500/80 fill-rose-500/20" />
+                        <Heart className="size-3.5 text-rose-500 fill-rose-500/20" />
                         <span className="font-medium text-foreground">{item.reactions}</span>
                       </div>
-                    </TableCell>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
 
-                    {/* Date */}
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {item.date}
-                    </TableCell>
+          {/* PAGINATION CONTROLS */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Rows per page:</span>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => table.setPageSize(Number(value))}
+              >
+                <SelectTrigger className="h-8 w-18 text-xs cursor-pointer">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs cursor-pointer">
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="hidden sm:inline">
+                Showing {table.getRowModel().rows.length} of {filteredItems.length} items
+              </span>
+            </div>
 
-                    {/* Actions dropdown */}
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="size-8">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedItem(item)}>
-                            <Eye className="size-4 mr-2" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleTogglePin(item)}>
-                            {item.isPinned ? (
-                              <>
-                                <PinOff className="size-4 mr-2" /> Unpin from feed
-                              </>
-                            ) : (
-                              <>
-                                <Pin className="size-4 mr-2" /> Pin to feed top
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setDeletingItem(item)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 className="size-4 mr-2" /> Delete Update
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            <div className="flex items-center gap-4 font-medium">
+              <span>
+                Page {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* TABLE VIEW - SINGLE CLEAN BORDER MATCHING CODEBASE */
+        <div className="space-y-4">
+          <div className="rounded-md border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="bg-muted/50 hover:bg-muted/50">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-xs">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    onClick={() => setSelectedItem(row.original)}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* PAGINATION CONTROLS */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Rows per page:</span>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => table.setPageSize(Number(value))}
+              >
+                <SelectTrigger className="h-8 w-18 text-xs cursor-pointer">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs cursor-pointer">
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="hidden sm:inline">
+                Showing {table.getRowModel().rows.length} of {filteredItems.length} items
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 font-medium">
+              <span>
+                Page {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

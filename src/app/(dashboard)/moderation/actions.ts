@@ -59,6 +59,27 @@ export async function resolveReport(id: string, resolution: "resolved" | "dismis
   return {};
 }
 
+export async function deleteReportedComment(reportId: string, commentId: string): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabaseAdmin = createAdminClient();
+  const { error: commentErr } = await supabaseAdmin.from("post_comments").delete().eq("id", commentId);
+  if (commentErr) return { error: commentErr.message };
+
+  const { error: repErr } = await supabaseAdmin
+    .from("reports")
+    .update({ status: "resolved", resolved_by: admin.id, resolved_at: new Date().toISOString() })
+    .eq("id", reportId);
+  if (repErr) return { error: repErr.message };
+
+  await logActivity(admin.id, "report.comment_deleted", "reports", reportId, { commentId });
+  revalidatePath("/content/moderation");
+  revalidatePath("/moderation");
+  revalidatePath("/content");
+  return {};
+}
+
 export async function createCommunityPost(formData: FormData): Promise<{ error?: string }> {
   const admin = await requireAdmin();
   if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };

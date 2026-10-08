@@ -17,14 +17,33 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
+  Trash2,
+  ArrowUpDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  type ColumnDef,
+  type SortingState,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +68,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { ModerationDashboardData, ModerationQueueItem } from "@/lib/moderation";
-import { approveContent, rejectContent, resolveReport } from "@/app/(dashboard)/moderation/actions";
+import { approveContent, rejectContent, resolveReport, deleteReportedComment } from "@/app/(dashboard)/moderation/actions";
 
 interface ModerationViewProps {
   initialData: ModerationDashboardData;
@@ -74,25 +93,27 @@ export function ModerationView({ initialData }: ModerationViewProps) {
   const { stats, items } = initialData;
 
   // Filter items based on tab and search
-  const filteredItems = items.filter((item) => {
-    // Tab filter
-    if (activeTab === "posts" && item.kind !== "community_posts") return false;
-    if (activeTab === "marketplace" && item.kind !== "marketplace_listings" && item.kind !== "love_local_offers") return false;
-    if (activeTab === "reports" && item.kind !== "reports") return false;
+  const filteredItems = React.useMemo(() => {
+    return items.filter((item) => {
+      // Tab filter
+      if (activeTab === "posts" && item.kind !== "community_posts") return false;
+      if (activeTab === "marketplace" && item.kind !== "marketplace_listings" && item.kind !== "love_local_offers") return false;
+      if (activeTab === "reports" && item.kind !== "reports") return false;
 
-    // Search query
-    if (query.trim()) {
-      const q = query.toLowerCase();
-      const match =
-        item.title.toLowerCase().includes(q) ||
-        item.authorName.toLowerCase().includes(q) ||
-        item.excerpt.toLowerCase().includes(q) ||
-        (item.reportReason && item.reportReason.toLowerCase().includes(q));
-      if (!match) return false;
-    }
+      // Search query
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        const match =
+          item.title.toLowerCase().includes(q) ||
+          item.authorName.toLowerCase().includes(q) ||
+          item.excerpt.toLowerCase().includes(q) ||
+          (item.reportReason && item.reportReason.toLowerCase().includes(q));
+        if (!match) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [items, activeTab, query]);
 
   const handleApprove = (item: ModerationQueueItem) => {
     startTransition(async () => {
@@ -130,6 +151,226 @@ export function ModerationView({ initialData }: ModerationViewProps) {
       if (selectedItem?.id === rejectingItem.id) setSelectedItem(null);
     });
   };
+
+  const handleDeleteComment = (item: ModerationQueueItem) => {
+    if (!item.commentId) return;
+    startTransition(async () => {
+      const res = await deleteReportedComment(item.id, item.commentId!);
+      if (res.error) toast.error(res.error);
+      else toast.success("Comment removed and report marked resolved.");
+      if (selectedItem?.id === item.id) setSelectedItem(null);
+    });
+  };
+
+  const columns = React.useMemo<ColumnDef<ModerationQueueItem>[]>(
+    () => [
+      {
+        accessorKey: "title",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Submitted Item
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          const isReport = item.kind === "reports";
+          return (
+            <div className="flex min-w-0 items-center gap-3">
+              {item.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.imageUrl}
+                  alt=""
+                  className="size-11 shrink-0 rounded-lg object-cover border border-border/50"
+                />
+              ) : (
+                <div
+                  className={`flex size-11 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
+                    isReport
+                      ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                      : "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                  }`}
+                >
+                  {isReport ? <AlertTriangle className="size-5" /> : item.initials}
+                </div>
+              )}
+              <div className="min-w-0 flex-1 max-w-[360px]">
+                <p className="truncate text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <span className="truncate">{item.title}</span>
+                  {item.price && (
+                    <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 shrink-0">
+                      {item.price}
+                    </Badge>
+                  )}
+                </p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.excerpt}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "category",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Category / Type
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          const isReport = item.kind === "reports";
+          return (
+            <Badge
+              variant={isReport ? "destructive" : "secondary"}
+              className="w-fit font-normal text-xs"
+            >
+              {isReport && item.reportTarget === "comment" ? "Comment Report" : item.category}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: "authorName",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Submitted By
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <div className="flex min-w-0 items-center gap-2">
+              <Avatar className="size-7 border border-border/50">
+                {item.authorAvatar && <AvatarImage src={item.authorAvatar} />}
+                <AvatarFallback className="text-[10px] bg-muted font-medium">{item.initials}</AvatarFallback>
+              </Avatar>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium text-foreground">{item.authorName}</p>
+                {item.authorId && (
+                  <Link
+                    href={`/users/${item.authorId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                  >
+                    View profile <ExternalLink className="size-2.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "date",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-3 h-8 text-xs font-semibold hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Date
+            <ArrowUpDown className="ml-1.5 size-3 text-muted-foreground" />
+          </Button>
+        ),
+        cell: ({ row }) => (
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {row.original.date}
+          </span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="text-right block w-full text-xs font-semibold pr-2">Actions</span>,
+        cell: ({ row }) => {
+          const item = row.original;
+          const isReport = item.kind === "reports";
+          return (
+            <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+              {isReport && item.reportTarget === "comment" && item.commentId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="size-8 p-0 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 border-rose-500/30"
+                  title="Delete reported comment and resolve report"
+                  disabled={pending}
+                  onClick={() => handleDeleteComment(item)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="size-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
+                title={isReport ? "Resolve report" : "Approve and publish"}
+                disabled={pending}
+                onClick={() => handleApprove(item)}
+              >
+                <Check className="size-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="size-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                title={isReport ? "Dismiss report" : "Reject submission"}
+                disabled={pending}
+                onClick={() => setRejectingItem(item)}
+              >
+                <X className="size-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="size-8 p-0 text-muted-foreground hover:text-foreground"
+                title="Inspect details"
+                onClick={() => setSelectedItem(item)}
+              >
+                <Eye className="size-4" />
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pending]
+  );
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    state: {
+      sorting,
+      pagination,
+    },
+    onSortingChange: setSorting,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
 
   return (
     <div className="space-y-6">
@@ -206,74 +447,61 @@ export function ModerationView({ initialData }: ModerationViewProps) {
       {/* FILTER & TOOLBAR */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* QUEUE TABS */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-              activeTab === "all"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            All Pending
-            <span className="rounded-full bg-background/20 px-1.5 py-0.2 text-[10px]">
-              {stats.totalPending}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("posts")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-              activeTab === "posts"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            Community Posts
-            <span className="rounded-full bg-background/20 px-1.5 py-0.2 text-[10px]">
-              {stats.pendingPosts}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("marketplace")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-              activeTab === "marketplace"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            Marketplace & Deals
-            <span className="rounded-full bg-background/20 px-1.5 py-0.2 text-[10px]">
-              {stats.pendingMarketplace}
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("reports")}
-            className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-              activeTab === "reports"
-                ? "bg-primary text-primary-foreground shadow-2xs"
-                : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-            }`}
-          >
-            Flagged Reports
-            <span className="rounded-full bg-background/20 px-1.5 py-0.2 text-[10px]">
-              {stats.openReports}
-            </span>
-          </button>
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(val) => {
+            setActiveTab(val as "all" | "posts" | "marketplace" | "reports");
+            table.setPageIndex(0);
+          }}
+          className="w-full sm:w-auto"
+        >
+          <TabsList className="h-9">
+            <TabsTrigger value="all" className="gap-1.5 text-xs">
+              All Pending
+              <span className="rounded-full bg-muted-foreground/15 px-1.5 py-0.2 text-[10px] font-mono">
+                {stats.totalPending}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="posts" className="gap-1.5 text-xs">
+              Community Posts
+              <span className="rounded-full bg-muted-foreground/15 px-1.5 py-0.2 text-[10px] font-mono">
+                {stats.pendingPosts}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="marketplace" className="gap-1.5 text-xs">
+              Marketplace & Deals
+              <span className="rounded-full bg-muted-foreground/15 px-1.5 py-0.2 text-[10px] font-mono">
+                {stats.pendingMarketplace}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="gap-1.5 text-xs">
+              Flagged Reports
+              <span className="rounded-full bg-muted-foreground/15 px-1.5 py-0.2 text-[10px] font-mono">
+                {stats.openReports}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         {/* SEARCH BAR */}
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              table.setPageIndex(0);
+            }}
             placeholder="Search queue..."
             className="pl-9 h-9 text-sm"
           />
           {query && (
             <button
-              onClick={() => setQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setQuery("");
+                table.setPageIndex(0);
+              }}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X className="size-3.5" />
             </button>
@@ -292,138 +520,91 @@ export function ModerationView({ initialData }: ModerationViewProps) {
           </p>
         </div>
       ) : (
-        <div className="rounded-md border bg-card overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="min-w-[320px]">Submitted Item</TableHead>
-                <TableHead className="w-[160px]">Category / Type</TableHead>
-                <TableHead className="w-[180px]">Submitted By</TableHead>
-                <TableHead className="w-[120px]">Date</TableHead>
-                <TableHead className="w-[130px] text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredItems.map((item) => {
-                const isReport = item.kind === "reports";
-
-                return (
+        <div className="space-y-4">
+          <div className="rounded-md border bg-card overflow-hidden">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="bg-muted/50 hover:bg-muted/50">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-xs">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
                   <TableRow
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
+                    key={row.id}
+                    onClick={() => setSelectedItem(row.original)}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                   >
-                    {/* Item preview */}
-                    <TableCell className="font-medium">
-                      <div className="flex min-w-0 items-center gap-3">
-                        {item.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            className="size-11 shrink-0 rounded-lg object-cover border border-border/50"
-                          />
-                        ) : (
-                          <div
-                            className={`flex size-11 shrink-0 items-center justify-center rounded-lg text-xs font-semibold ${
-                              isReport
-                                ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
-                                : "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                            }`}
-                          >
-                            {isReport ? <AlertTriangle className="size-5" /> : item.initials}
-                          </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-foreground flex items-center gap-1.5">
-                            <span className="truncate">{item.title}</span>
-                            {item.price && (
-                              <Badge variant="outline" className="font-mono text-[10px] px-1.5 py-0 shrink-0">
-                                {item.price}
-                              </Badge>
-                            )}
-                          </p>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.excerpt}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Category / Type */}
-                    <TableCell>
-                      <Badge
-                        variant={isReport ? "destructive" : "secondary"}
-                        className="w-fit font-normal text-xs"
-                      >
-                        {item.category}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Author / Submitter */}
-                    <TableCell>
-                      <div className="flex min-w-0 items-center gap-2">
-                        <Avatar className="size-7 border border-border/50">
-                          {item.authorAvatar && <AvatarImage src={item.authorAvatar} />}
-                          <AvatarFallback className="text-[10px] bg-muted font-medium">{item.initials}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-medium text-foreground">{item.authorName}</p>
-                          {item.authorId && (
-                            <Link
-                              href={`/users/${item.authorId}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[11px] text-primary hover:underline flex items-center gap-1"
-                            >
-                              View profile <ExternalLink className="size-2.5" />
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    {/* Date */}
-                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                      {item.date}
-                    </TableCell>
-
-                    {/* Quick Action Buttons */}
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="size-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10 border-emerald-500/30"
-                          title={isReport ? "Resolve report" : "Approve and publish"}
-                          disabled={pending}
-                          onClick={() => handleApprove(item)}
-                        >
-                          <Check className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="size-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                          title={isReport ? "Dismiss report" : "Reject submission"}
-                          disabled={pending}
-                          onClick={() => setRejectingItem(item)}
-                        >
-                          <X className="size-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="size-8 p-0 text-muted-foreground hover:text-foreground"
-                          title="Inspect details"
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* PAGINATION TOOLBAR */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span>Rows per page:</span>
+              <Select
+                value={`${table.getState().pagination.pageSize}`}
+                onValueChange={(value) => table.setPageSize(Number(value))}
+              >
+                <SelectTrigger className="h-8 w-18 text-xs cursor-pointer">
+                  <SelectValue placeholder={table.getState().pagination.pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 50].map((pageSize) => (
+                    <SelectItem key={pageSize} value={`${pageSize}`} className="text-xs cursor-pointer">
+                      {pageSize}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="hidden sm:inline">
+                Showing {table.getRowModel().rows.length} of {filteredItems.length} items
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 font-medium">
+              <span>
+                Page {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2.5 text-xs cursor-pointer"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -503,7 +684,9 @@ export function ModerationView({ initialData }: ModerationViewProps) {
               <SheetHeader>
                 <div className="flex items-center gap-2">
                   <Badge variant={selectedItem.kind === "reports" ? "destructive" : "secondary"}>
-                    {selectedItem.category}
+                    {selectedItem.kind === "reports" && selectedItem.reportTarget === "comment"
+                      ? "Comment Report"
+                      : selectedItem.category}
                   </Badge>
                   <Badge variant="outline" className="text-amber-600 dark:text-amber-400 border-amber-500/30">
                     Pending Review
@@ -574,7 +757,18 @@ export function ModerationView({ initialData }: ModerationViewProps) {
               )}
 
               {/* ACTION BAR */}
-              <div className="pt-4 border-t border-border/60 flex items-center justify-between gap-3">
+              <div className="pt-4 border-t border-border/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                {selectedItem.kind === "reports" && selectedItem.reportTarget === "comment" && selectedItem.commentId && (
+                  <Button
+                    variant="destructive"
+                    className="gap-1.5 flex-1"
+                    onClick={() => handleDeleteComment(selectedItem)}
+                    disabled={pending}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete Reported Comment
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   className="text-destructive hover:bg-destructive/10 border-destructive/30 gap-1.5 flex-1"

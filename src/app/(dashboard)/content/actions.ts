@@ -118,3 +118,34 @@ export async function deleteCmsPost(
 
   return {};
 }
+
+export async function deletePostComment(
+  commentId: string,
+  postId: string
+): Promise<{ error?: string }> {
+  const admin = await requireAdmin();
+  if (isPreviewMode) return { error: "Preview mode — no changes are saved here." };
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("post_comments").delete().eq("id", commentId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await logActivity(admin.id, "post_comments.deleted", "post_comments", commentId, { postId });
+
+  revalidatePath("/content");
+  revalidatePath("/content/drafts");
+  revalidatePath("/content/moderation");
+  revalidatePath("/moderation");
+
+  return {};
+}
+
+export async function getCommentsForPost(postId: string) {
+  await requireAdmin();
+  const { fetchPostComments } = await import("@/lib/content");
+  const comments = await fetchPostComments(postId);
+  return { comments };
+}
