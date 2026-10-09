@@ -70,7 +70,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Settings & System",
     items: [
-      { href: "/email-templates", label: "Email Templates", icon: Mail },
       { href: "/account", label: "Account", icon: Settings },
     ],
   },
