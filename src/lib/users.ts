@@ -15,13 +15,33 @@ export interface UserRow {
   created_at: string;
 }
 
+function flattenProfile(p: any): UserRow {
+  const privateDetails = Array.isArray(p.profile_private_details)
+    ? p.profile_private_details[0]
+    : p.profile_private_details;
+  return {
+    id: p.id,
+    role: p.role,
+    full_name: p.full_name,
+    email: p.email ?? null,
+    phone_number: privateDetails?.phone_number ?? p.phone_number ?? null,
+    street_address: privateDetails?.street_address ?? p.street_address ?? null,
+    business_name: p.business_name,
+    ward: p.ward,
+    is_suspended: p.is_suspended,
+    suspended_at: p.suspended_at,
+    suspended_reason: p.suspended_reason,
+    created_at: p.created_at,
+  };
+}
+
 export async function getAllUsers(): Promise<UserRow[]> {
   const admin = createAdminClient();
   const [{ data: profiles }, authResult] = await Promise.all([
     admin
       .from("profiles")
       .select(
-        "id, role, full_name, phone_number, street_address, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at"
+        "id, role, full_name, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at, profile_private_details(phone_number, street_address)"
       )
       .order("created_at", { ascending: false }),
     admin.auth.admin.listUsers({ perPage: 1000 }).catch(() => ({ data: { users: [] } })),
@@ -34,11 +54,13 @@ export async function getAllUsers(): Promise<UserRow[]> {
     }
   }
 
-  const rawProfiles = (profiles as UserRow[]) ?? [];
-  return rawProfiles.map((p) => ({
-    ...p,
-    email: emailMap.get(p.id) ?? null,
-  }));
+  const rawProfiles = (profiles as any[]) ?? [];
+  return rawProfiles.map((p) =>
+    flattenProfile({
+      ...p,
+      email: emailMap.get(p.id) ?? null,
+    })
+  );
 }
 
 const PAGE_SIZE = 25;
@@ -52,7 +74,7 @@ export async function getUsers(opts: { role?: string; search?: string; page?: nu
   let query = admin
     .from("profiles")
     .select(
-      "id, role, full_name, phone_number, street_address, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at",
+      "id, role, full_name, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at, profile_private_details(phone_number, street_address)",
       { count: "exact" }
     )
     .order("created_at", { ascending: false })
@@ -67,7 +89,7 @@ export async function getUsers(opts: { role?: string; search?: string; page?: nu
     const sanitized = opts.search.replace(/[,()"]/g, " ").replace(/\s+/g, " ").trim();
     if (sanitized) {
       query = query.or(
-        `full_name.ilike.%${sanitized}%,business_name.ilike.%${sanitized}%,phone_number.ilike.%${sanitized}%`
+        `full_name.ilike.%${sanitized}%,business_name.ilike.%${sanitized}%`
       );
     }
   }
@@ -78,7 +100,8 @@ export async function getUsers(opts: { role?: string; search?: string; page?: nu
   }
 
   const total = count ?? 0;
-  return { users: (data as UserRow[]) ?? [], total, page, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+  const users = ((data as any[]) ?? []).map(flattenProfile);
+  return { users, total, page, totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 /** Fetches the email for one user via the Auth Admin API — not stored on
@@ -108,7 +131,7 @@ export async function getUserDetail(id: string): Promise<UserDetail | null> {
       admin
         .from("profiles")
         .select(
-          "id, role, full_name, phone_number, street_address, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at"
+          "id, role, full_name, business_name, ward, is_suspended, suspended_at, suspended_reason, created_at, profile_private_details(phone_number, street_address)"
         )
         .eq("id", id)
         .single(),
@@ -128,7 +151,7 @@ export async function getUserDetail(id: string): Promise<UserDetail | null> {
   if (!profileResult.data) return null;
 
   return {
-    ...(profileResult.data as UserRow),
+    ...flattenProfile(profileResult.data),
     email,
     communityPostsCount: postsCount.count ?? 0,
     marketplaceListingsCount: listingsCount.count ?? 0,
