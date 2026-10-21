@@ -5,8 +5,15 @@ import { ContentView } from "../components/content-view";
 export const dynamic = "force-dynamic";
 
 export default async function ScheduledPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const { posts, stats } = await getContentData();
 
-  return <ContentView posts={posts} stats={stats} initialTab="Scheduled" />;
+  return (
+    <ContentView
+      posts={posts}
+      stats={stats}
+      initialTab="Scheduled"
+      adminName={admin.full_name || "JC Steyn"}
+    />
+  );
 }

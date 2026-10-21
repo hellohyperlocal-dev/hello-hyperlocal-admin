@@ -77,6 +77,7 @@ interface ContentViewProps {
   posts: CmsPost[];
   stats: CmsContentData["stats"];
   initialTab?: "All Posts" | "Drafts" | "Scheduled";
+  adminName?: string;
 }
 
 function StatCard({
@@ -127,7 +128,12 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function ContentView({ posts: initialPosts, stats, initialTab = "All Posts" }: ContentViewProps) {
+export function ContentView({
+  posts: initialPosts,
+  stats,
+  initialTab = "All Posts",
+  adminName = "JC Steyn",
+}: ContentViewProps) {
   const [activeTab, setActiveTab] = useState<string>(initialTab);
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
@@ -138,11 +144,18 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
   // Creation form state
   const [createPending, startCreateTransition] = useTransition();
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
+  const [postAs, setPostAs] = useState(adminName);
   const [postType, setPostType] = useState("Community Update");
   const [category, setCategory] = useState("Neighbourhood Talk");
   const [statusVal, setStatusVal] = useState("Publish immediately");
   const [isPinned, setIsPinned] = useState(false);
   const [sendPush, setSendPush] = useState(false);
+
+  React.useEffect(() => {
+    if (adminName) {
+      setPostAs(adminName);
+    }
+  }, [adminName]);
 
   // Filter posts
   const filteredPosts = React.useMemo(() => {
@@ -371,6 +384,7 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
     const isDraft = submitter?.value === "draft" || statusVal === "Save draft";
     const formData = new FormData(form);
 
+    formData.set("postAs", postAs);
     formData.set("postType", postType);
     formData.set("category", category);
     formData.set("imageUrl", uploadedImageUrl);
@@ -386,6 +400,7 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
       toast.success(isDraft ? "Draft saved successfully." : "Post published successfully.");
       setIsCreating(false);
       setUploadedImageUrl("");
+      setPostAs(adminName);
       form.reset();
     });
   }
@@ -494,12 +509,28 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
                   />
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <label htmlFor="postAs" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Post as
+                    </label>
+                    <select
+                      id="postAs"
+                      value={postAs}
+                      onChange={(e) => setPostAs(e.target.value)}
+                      className="h-10 rounded-lg border border-input bg-background px-3 text-sm font-medium"
+                    >
+                      <option value={adminName}>{adminName}</option>
+                      <option value="Hello Linden">Hello Linden</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="postType" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Post type
                     </label>
                     <select
+                      id="postType"
                       value={postType}
                       onChange={(e) => setPostType(e.target.value)}
                       className="h-10 rounded-lg border border-input bg-background px-3 text-sm font-medium"
@@ -512,10 +543,11 @@ export function ContentView({ posts: initialPosts, stats, initialTab = "All Post
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <label htmlFor="category" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       Category
                     </label>
                     <select
+                      id="category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
                       className="h-10 rounded-lg border border-input bg-background px-3 text-sm font-medium"

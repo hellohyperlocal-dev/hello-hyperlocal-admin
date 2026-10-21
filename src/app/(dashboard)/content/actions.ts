@@ -17,6 +17,7 @@ export async function createCmsPost(formData: FormData): Promise<{ error?: strin
   const imageUrl = String(formData.get("imageUrl") || "").trim() || null;
   const status = String(formData.get("status") || "published").trim().toLowerCase();
   const postType = String(formData.get("postType") || "community").trim().toLowerCase();
+  const postAs = String(formData.get("postAs") || "").trim();
 
   if (!title) {
     return { error: "Post title is required." };
@@ -37,13 +38,27 @@ export async function createCmsPost(formData: FormData): Promise<{ error?: strin
   const isDraft = status === "draft" || status === "drafts";
   const supabase = createAdminClient();
 
+  let authorId = admin.id;
+  if (postAs === "Hello Linden") {
+    const { data: helloProfile } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("full_name", "Hello Linden")
+      .limit(1)
+      .maybeSingle();
+
+    if (helloProfile?.id) {
+      authorId = helloProfile.id;
+    }
+  }
+
   const finalContent = excerpt && excerpt !== content ? `${excerpt}\n\n${content}` : content;
 
   if (postType === "ward alert" || postType === "ward") {
     const { data, error } = await supabase
       .from("ward_updates")
       .insert({
-        councillor_id: admin.id,
+        councillor_id: authorId,
         category: "notice",
         title,
         body: finalContent,
@@ -58,12 +73,15 @@ export async function createCmsPost(formData: FormData): Promise<{ error?: strin
       return { error: error?.message || "Failed to create ward alert." };
     }
 
-    await logActivity(admin.id, "ward_updates.created", "ward_updates", data.id, { title });
+    await logActivity(admin.id, "ward_updates.created", "ward_updates", data.id, {
+      title,
+      postAs: postAs || admin.full_name || "JC Steyn",
+    });
   } else {
     const { data, error } = await supabase
       .from("community_posts")
       .insert({
-        author_id: admin.id,
+        author_id: authorId,
         title,
         category,
         content: finalContent,
@@ -81,6 +99,7 @@ export async function createCmsPost(formData: FormData): Promise<{ error?: strin
     await logActivity(admin.id, "community_post.created", "community_posts", data.id, {
       title,
       category,
+      postAs: postAs || admin.full_name || "JC Steyn",
       status: isDraft ? "draft" : "published",
     });
   }
