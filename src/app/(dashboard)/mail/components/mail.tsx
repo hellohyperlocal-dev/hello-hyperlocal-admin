@@ -29,7 +29,7 @@ import { useMail } from "../use-mail"
 import { Button } from "@/components/ui/button"
 import { updateThreadStateAction } from "../actions"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { MailComposeDialog } from "./mail-compose-dialog"
 
 interface MailProps {
@@ -61,12 +61,25 @@ export function Mail({
   mails: initialMails,
 }: MailProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const composeParam = searchParams.get("compose");
+  const templateIdParam = searchParams.get("templateId");
+
   const [mail, setMail] = useMail();
   const [mailList, setMailList] = React.useState<Mail[]>(initialMails);
   const [selectedAccount, setSelectedAccount] = React.useState<Account>(accounts[0]);
   const [selectedFolder, setSelectedFolder] = React.useState<string>("inbox");
   const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [composeOpen, setComposeOpen] = React.useState<boolean>(false);
+  const [initialTemplateId, setInitialTemplateId] = React.useState<string | null>(null);
+
+  // Auto-open composer if ?compose=true or ?templateId=... is in URL
+  React.useEffect(() => {
+    if (composeParam === "true" || templateIdParam) {
+      if (templateIdParam) setInitialTemplateId(templateIdParam);
+      setComposeOpen(true);
+    }
+  }, [composeParam, templateIdParam]);
 
   // Sync if initialMails changes from server revalidation
   React.useEffect(() => {
@@ -381,9 +394,13 @@ export function Mail({
 
       <MailComposeDialog
         open={composeOpen}
-        onOpenChange={setComposeOpen}
+        onOpenChange={(open) => {
+          setComposeOpen(open);
+          if (!open) setInitialTemplateId(null);
+        }}
         accounts={accounts}
         defaultFromEmail={selectedAccount.email}
+        initialTemplateId={initialTemplateId}
         onThreadCreated={(newThreadId) => {
           setMail({ selected: newThreadId });
           router.refresh();

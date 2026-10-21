@@ -303,6 +303,12 @@ export function TemplatesDashboardClient({ initialTemplates }: Props) {
                             Open in Studio
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem asChild className="gap-2 text-xs font-semibold text-[#1C472A] focus:text-[#1C472A] focus:bg-primary/10">
+                          <Link href={`/mail?compose=true&templateId=${t.id}`}>
+                            <Send className="size-3.5 text-[#1C472A]" />
+                            Use in Mail App
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleDuplicate(t.id)}
                           className="gap-2 text-xs"
@@ -354,17 +360,30 @@ export function TemplatesDashboardClient({ initialTemplates }: Props) {
                     })}
                   </span>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="h-7 text-xs gap-1 group-hover:border-[#1C472A] group-hover:text-[#1C472A]"
-                  >
-                    <Link href={`/email-designer/${t.id}`}>
-                      Open Studio
-                      <ArrowRight className="size-3" />
-                    </Link>
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                      className="h-7 text-xs gap-1 border-primary/20 text-[#1C472A] hover:bg-primary/10 hover:text-[#1C472A]"
+                    >
+                      <Link href={`/mail?compose=true&templateId=${t.id}`}>
+                        <Send className="size-3 text-[#1C472A]" />
+                        Use in Mail
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="h-7 text-xs gap-1 group-hover:border-[#1C472A] group-hover:text-[#1C472A]"
+                    >
+                      <Link href={`/email-designer/${t.id}`}>
+                        Edit
+                        <ArrowRight className="size-3" />
+                      </Link>
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             ))}

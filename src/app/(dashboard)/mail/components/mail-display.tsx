@@ -53,6 +53,7 @@ export function MailDisplay({
 }: MailDisplayProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [replyText, setReplyText] = useState("");
+  const [replyHtml, setReplyHtml] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -118,6 +119,7 @@ export function MailDisplay({
         toName: mail.name,
         subject: mail.subject.startsWith("Re:") ? mail.subject : `Re: ${mail.subject}`,
         bodyText: replyText,
+        bodyHtml: replyHtml,
         templateId: selectedTemplateId,
       });
 
@@ -128,6 +130,7 @@ export function MailDisplay({
 
       toast.success(`Reply sent to ${mail.email} via Resend`);
       setReplyText("");
+      setReplyHtml(null);
       setSelectedTemplateId(null);
 
       // Optimistically update conversation
@@ -453,9 +456,10 @@ export function MailDisplay({
                 recipientName={mail.name}
                 recipientEmail={mail.email}
                 category={mail.category}
-                onSelectTemplate={(text, tmplId) => {
-                  setReplyText(text);
-                  setSelectedTemplateId(tmplId);
+                onSelectTemplate={(data) => {
+                  setReplyText(data.text);
+                  setReplyHtml(data.html || null);
+                  setSelectedTemplateId(data.templateId || null);
                 }}
               />
             </div>

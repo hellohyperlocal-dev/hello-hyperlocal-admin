@@ -32,6 +32,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface DesignerHeaderProps {
+  documentId?: string;
   title: string;
   onTitleChange: (newTitle: string) => void;
   viewport: "desktop" | "mobile";
@@ -49,6 +50,7 @@ interface DesignerHeaderProps {
 }
 
 export function DesignerHeader({
+  documentId,
   title,
   onTitleChange,
   viewport,
@@ -277,9 +279,9 @@ export function DesignerHeader({
                 Send Test Email
               </DropdownMenuItem>
               <DropdownMenuItem asChild className="gap-2 text-xs">
-                <Link href="/mail">
+                <Link href={documentId ? `/mail?compose=true&templateId=${documentId}` : "/mail?compose=true"}>
                   <Mail className="size-3.5 text-muted-foreground" />
-                  Open in Mail App
+                  Use in Mail App
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

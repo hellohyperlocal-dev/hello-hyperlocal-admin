@@ -427,6 +427,7 @@ export function DesignerClient({ initialDocument }: DesignerClientProps) {
     <div className="flex flex-col h-[calc(100vh-4rem)] -m-4 sm:-m-6 lg:-m-8 overflow-hidden bg-background">
       {/* RGE Studio Top Navigation Bar */}
       <DesignerHeader
+        documentId={doc.id}
         title={doc.name}
         onTitleChange={handleTitleChange}
         viewport={viewport}
