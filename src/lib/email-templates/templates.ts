@@ -170,7 +170,53 @@ Hello Linden Security Team
     `.trim(),
   },
 
-  // 5. Content Approved
+  // 5. Supabase Email Confirmation (Confirm Signup)
+  {
+    id: "confirm-email",
+    title: "Confirm Email Address",
+    category: "security",
+    description: "Supabase Auth signup verification email. Compatible with {{ .ConfirmationURL }} for direct use in Supabase Email Templates.",
+    defaultSubject: "Confirm your email address",
+    variables: [
+      { key: "email", label: "Recipient Email", type: "text", defaultValue: "resident@hellolinden.co.za" },
+      { key: "confirmationUrl", label: "Confirmation URL", type: "url", defaultValue: "{{ .ConfirmationURL }}" },
+    ],
+    renderHtml: (vars) =>
+      renderBaseEmailLayout({
+        title: "Confirm Your Email Address",
+        previewText: "Follow the link below to confirm this email address and finish signing up for Hello Linden.",
+        badge: { text: "Email Verification", variant: "success" },
+        contentHtml: `
+          <h1 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: #1c472a;">Confirm your email address</h1>
+          <p style="margin: 0 0 16px 0;">
+            Follow the link below to confirm this email address and finish signing up for <strong>Hello Linden</strong>.
+          </p>
+          <p style="margin: 0 0 16px 0;">
+            Once confirmed, you'll be able to connect with verified neighbors, discover local businesses, and access real-time community alerts.
+          </p>
+          ${renderButton({ label: "Confirm email address", url: vars.confirmationUrl })}
+          <p style="margin: 16px 0 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
+            Or copy and paste this link into your browser:
+            <br />
+            <a href="${vars.confirmationUrl}" style="color: #166534; word-break: break-all;">${vars.confirmationUrl}</a>
+          </p>
+          ${renderCallout({ text: "If you did not sign up for Hello Linden, you can safely ignore this email. No account will be activated without your confirmation.", variant: "info" })}
+        `,
+      }),
+    renderPlainText: (vars) => `
+Confirm your email address
+
+Follow the link below to confirm this email address and finish signing up for Hello Linden:
+
+${vars.confirmationUrl}
+
+If you did not sign up for Hello Linden, you can safely ignore this email.
+
+Hello Linden Team
+    `.trim(),
+  },
+
+  // 6. Content Approved
   {
     id: "content-approved",
     title: "Content Approved",
