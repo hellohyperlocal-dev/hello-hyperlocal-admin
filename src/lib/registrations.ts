@@ -1,5 +1,49 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isPreviewMode } from "@/lib/preview-mode";
 import type { InboxCategory, InboxItemInput } from "@/components/inbox/types";
+
+const SAMPLE_REGISTRATION_ROWS: RegistrationRow[] = [
+  {
+    id: "sample-reg-1",
+    email: "naledi@example.com",
+    roles: ["resident", "founding_neighbour"],
+    first_name: "Naledi",
+    last_name: "Khumalo",
+    full_name: "Naledi Khumalo",
+    mobile: "+27 82 000 0000",
+    suburb: "Linden",
+    interests: ["events", "marketplace"],
+    business_name: null,
+    business_address: null,
+    wants_window_sticker: false,
+    details: null,
+    consent_at: new Date().toISOString(),
+    source: "website",
+    created_at: new Date().toISOString(),
+    claimed_profile_id: null,
+    claimed_at: null,
+  },
+  {
+    id: "sample-reg-2",
+    email: "maryanne@downsizeup.co.za",
+    roles: ["business", "founding_business"],
+    first_name: "Mary-Anne",
+    last_name: "Pretorius",
+    full_name: "Mary-Anne Pretorius",
+    mobile: "+27 82 829 6437",
+    suburb: "Linden",
+    interests: ["local-business"],
+    business_name: "Downsize Up",
+    business_address: "34 4th Avenue, Linden",
+    wants_window_sticker: true,
+    details: null,
+    consent_at: new Date().toISOString(),
+    source: "website",
+    created_at: new Date().toISOString(),
+    claimed_profile_id: null,
+    claimed_at: null,
+  },
+];
 
 export const REGISTRATION_ROLES = [
   { id: "founding_neighbour", label: "Founding Neighbour" },
@@ -55,19 +99,25 @@ function previewOf(row: RegistrationRow): string {
 }
 
 export async function getRegistrations(): Promise<{ categories: InboxCategory[]; items: InboxItemInput[]; byId: Map<string, RegistrationDetail> }> {
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("registrations")
-    .select(
-      "id, email, roles, first_name, last_name, full_name, mobile, suburb, interests, business_name, business_address, wants_window_sticker, details, consent_at, source, created_at, claimed_profile_id, claimed_at"
-    )
-    .order("created_at", { ascending: false });
+  let rows: RegistrationRow[] = [];
 
-  if (error || !data) {
-    return { categories: REGISTRATION_ROLES.map((r) => ({ ...r, count: 0 })), items: [], byId: new Map() };
+  if (isPreviewMode) {
+    rows = SAMPLE_REGISTRATION_ROWS;
+  } else {
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("registrations")
+      .select(
+        "id, email, roles, first_name, last_name, full_name, mobile, suburb, interests, business_name, business_address, wants_window_sticker, details, consent_at, source, created_at, claimed_profile_id, claimed_at"
+      )
+      .order("created_at", { ascending: false });
+
+    if (error || !data) {
+      return { categories: REGISTRATION_ROLES.map((r) => ({ ...r, count: 0 })), items: [], byId: new Map() };
+    }
+    rows = data as RegistrationRow[];
   }
 
-  const rows = data as RegistrationRow[];
   const byId = new Map<string, RegistrationDetail>();
   const items: InboxItemInput[] = rows.map((row) => {
     const primaryRole = primaryRoleOf(row.roles);

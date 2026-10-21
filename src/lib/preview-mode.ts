@@ -1,7 +1,8 @@
 /**
- * When true, the auth gate is bypassed entirely and screens render sample
- * data instead of querying Supabase — for showing the UI to someone (e.g. a
- * client demo over a tunnel) without real credentials or touching real data.
- * Never enable this in an actual deployment.
+ * When true (strictly non-production only), the auth gate is bypassed and screens
+ * render sample data instead of querying Supabase.
+ * Hard-locked to false in production builds to prevent accidental authentication bypasses.
  */
-export const isPreviewMode = process.env.NEXT_PUBLIC_PREVIEW_MODE === "true";
+export const isPreviewMode =
+  process.env.NODE_ENV !== "production" &&
+  process.env.NEXT_PUBLIC_PREVIEW_MODE === "true";

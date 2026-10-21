@@ -1,5 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isPreviewMode } from "@/lib/preview-mode";
 
 export interface MailThreadRow {
   id: string;
@@ -61,6 +62,7 @@ export async function getMailThreads(options: {
   category?: string;
   search?: string;
 } = {}): Promise<MailThreadWithMessages[]> {
+  if (isPreviewMode) return [];
   const admin = createAdminClient();
   const folder = options.folder || "inbox";
 
@@ -139,6 +141,22 @@ export async function getMailThreads(options: {
  * Calculates counts for all mailbox folders and categories.
  */
 export async function getMailCounts(): Promise<MailFolderCounts> {
+  if (isPreviewMode) {
+    return {
+      inbox: 0,
+      drafts: 0,
+      sent: 0,
+      junk: 0,
+      trash: 0,
+      archive: 0,
+      categories: {
+        founding_neighbour: 0,
+        founding_business: 0,
+        partner_interest: 0,
+        general_enquiry: 0,
+      },
+    };
+  }
   const admin = createAdminClient();
 
   const { data: threads, error } = await admin
