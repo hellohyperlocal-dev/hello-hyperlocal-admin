@@ -13,6 +13,7 @@ import {
   FileText,
   Archive,
   Clock3,
+  Palette,
   type LucideIcon,
 } from "lucide-react";
 
@@ -40,6 +41,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Apps",
     items: [
       { href: "/mail", label: "Mail", icon: Mail },
+      { href: "/email-designer", label: "Email Designer", icon: Palette },
     ],
   },
   {
