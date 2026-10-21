@@ -2,7 +2,7 @@
 -- Persistent storage for custom email designs created via the RGE Studio-style builder.
 
 CREATE TABLE IF NOT EXISTS public.email_designer_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   name TEXT NOT NULL,
   description TEXT,
   category TEXT DEFAULT 'general',

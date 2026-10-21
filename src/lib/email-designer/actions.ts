@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
 import { isPreviewMode } from "@/lib/preview-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -141,10 +142,18 @@ export async function saveDesignerTemplateAction(doc: EmailDocument): Promise<{
     }
 
     if (isPreviewMode) {
+      revalidatePath("/email-designer");
+      revalidatePath(`/email-designer/${doc.id}`);
+      revalidatePath("/mail");
       return { success: true, id: doc.id };
     }
 
     const supabase = createAdminClient();
+
+    const isUuid = (str?: string | null) =>
+      typeof str === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
     const { error } = await supabase
       .from("email_designer_templates")
       .upsert({
@@ -157,18 +166,23 @@ export async function saveDesignerTemplateAction(doc: EmailDocument): Promise<{
         design: record.design,
         html_content: record.html_content,
         thumbnail_url: record.thumbnail_url,
-        created_by: admin.id,
+        created_by: isUuid(admin.id) ? admin.id : null,
         updated_at: now,
       });
 
     if (error) {
-      console.warn("[email-designer] DB save failed, memory saved:", error.message);
+      console.error("[email-designer] DB save failed:", error.message);
+      return { success: false, error: error.message };
     }
+
+    revalidatePath("/email-designer");
+    revalidatePath(`/email-designer/${doc.id}`);
+    revalidatePath("/mail");
 
     return { success: true, id: doc.id };
   } catch (err: any) {
     console.error("[email-designer] saveDesignerTemplateAction error:", err);
-    return { success: true, id: doc.id };
+    return { success: false, error: err?.message || "Failed to save template" };
   }
 }
 
@@ -189,9 +203,16 @@ export async function duplicateDesignerTemplateAction(id: string): Promise<{
       ...res.template.design,
       id: newId,
       name: `${res.template.name} (Copy)`,
+      createdAt: new Date().toISOString(),
     };
 
-    await saveDesignerTemplateAction(duplicatedDoc);
+    const saveRes = await saveDesignerTemplateAction(duplicatedDoc);
+    if (!saveRes.success) {
+      return { success: false, error: saveRes.error || "Failed to duplicate" };
+    }
+
+    revalidatePath("/email-designer");
+    revalidatePath("/mail");
     return { success: true, newId };
   } catch (err: any) {
     return { success: false, error: err?.message || "Failed to duplicate" };
@@ -209,9 +230,14 @@ export async function deleteDesignerTemplateAction(id: string): Promise<{
 
     if (!isPreviewMode) {
       const supabase = createAdminClient();
-      await supabase.from("email_designer_templates").delete().eq("id", id);
+      const { error } = await supabase.from("email_designer_templates").delete().eq("id", id);
+      if (error) {
+        return { success: false, error: error.message };
+      }
     }
 
+    revalidatePath("/email-designer");
+    revalidatePath("/mail");
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || "Failed to delete" };

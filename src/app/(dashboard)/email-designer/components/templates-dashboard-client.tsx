@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -58,6 +58,11 @@ interface Props {
 export function TemplatesDashboardClient({ initialTemplates }: Props) {
   const router = useRouter();
   const [templates, setTemplates] = useState<EmailDesignerTemplateRecord[]>(initialTemplates);
+
+  useEffect(() => {
+    setTemplates(initialTemplates);
+  }, [initialTemplates]);
+
   const [search, setSearch] = useState("");
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [activeTestTemplate, setActiveTestTemplate] = useState<EmailDesignerTemplateRecord | null>(null);

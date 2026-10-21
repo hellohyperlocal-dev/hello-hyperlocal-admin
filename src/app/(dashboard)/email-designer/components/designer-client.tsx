@@ -105,18 +105,24 @@ export function DesignerClient({ initialDocument }: DesignerClientProps) {
   }, [handleUndo, handleRedo]);
 
   // Save handler
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (isManual = false) => {
     setSaveStatus("saving");
     try {
       const res = await saveDesignerTemplateAction(doc);
       if (res.success) {
         setSaveStatus("saved");
+        if (isManual) {
+          toast.success("Template saved successfully!");
+        }
       } else {
         setSaveStatus("unsaved");
         toast.error(res.error || "Failed to save template");
       }
     } catch {
       setSaveStatus("unsaved");
+      if (isManual) {
+        toast.error("Failed to save template");
+      }
     }
   }, [doc]);
 
@@ -125,7 +131,7 @@ export function DesignerClient({ initialDocument }: DesignerClientProps) {
     if (saveStatus !== "unsaved") return;
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      handleSave();
+      handleSave(false);
     }, 2000);
 
     return () => {
@@ -436,7 +442,7 @@ export function DesignerClient({ initialDocument }: DesignerClientProps) {
         canRedo={canRedo}
         onUndo={handleUndo}
         onRedo={handleRedo}
-        onSave={handleSave}
+        onSave={() => handleSave(true)}
         saveStatus={saveStatus}
         onOpenTestEmail={() => setTestEmailOpen(true)}
         onOpenExportDialog={() => setExportDialogOpen(true)}

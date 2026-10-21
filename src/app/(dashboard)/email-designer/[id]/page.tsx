@@ -3,6 +3,8 @@ import { getDesignerTemplateByIdAction } from "@/lib/email-designer/actions";
 import { DesignerClient } from "../components/designer-client";
 import { STARTER_TEMPLATES } from "@/lib/email-designer/presets";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ id: string }>;
 }
