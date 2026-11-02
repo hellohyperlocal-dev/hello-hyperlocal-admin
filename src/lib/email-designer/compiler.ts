@@ -16,6 +16,7 @@ import {
   MenuBlockContent,
   TableBlockContent,
 } from "./types";
+import { getSocialNetworkMeta } from "./social-icons";
 
 function escapeHtml(text: string): string {
   if (!text) return "";
@@ -180,28 +181,24 @@ function renderBlock(block: EmailBlock, defaultFont: string): string {
     case "social": {
       const c = block.content as SocialBlockContent;
       const networks = c.networks || [];
-      const iconSize = c.iconSize || 24;
+      const iconSize = c.iconSize || 28;
       const spacing = c.spacing || 12;
-
-      const networkIcons: Record<string, { label: string; bg: string; iconText: string }> = {
-        facebook: { label: "Facebook", bg: "#1877F2", iconText: "f" },
-        instagram: { label: "Instagram", bg: "#E4405F", iconText: "ig" },
-        x: { label: "X", bg: "#000000", iconText: "X" },
-        whatsapp: { label: "WhatsApp", bg: "#25D366", iconText: "wa" },
-        website: { label: "Website", bg: "#1C472A", iconText: "web" },
-        linkedin: { label: "LinkedIn", bg: "#0A66C2", iconText: "in" },
-      };
+      const svgSize = Math.max(14, Math.round(iconSize * 0.55));
 
       const iconsHtml = networks
         .map((net) => {
-          const info = networkIcons[net.network] || { label: net.network, bg: "#1C472A", iconText: "•" };
+          const meta = getSocialNetworkMeta(net.network);
+          const svgWithDimensions = meta.svgHtml
+            .replace(/width="16" height="16"/, `width="${svgSize}" height="${svgSize}"`)
+            .replace(/<svg /, `<svg style="display: block; margin: 0 auto;" `);
+
           return `
             <td style="padding: 0 ${spacing / 2}px;">
-              <a href="${net.url || "#"}" target="_blank" style="text-decoration: none; display: inline-block;">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-radius: 50%; background-color: ${info.bg}; width: ${iconSize}px; height: ${iconSize}px;">
+              <a href="${net.url || "#"}" target="_blank" title="${meta.label}" style="text-decoration: none; display: inline-block;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-radius: 50%; background-color: ${meta.bg}; width: ${iconSize}px; height: ${iconSize}px;">
                   <tr>
-                    <td align="center" valign="middle" style="color: #ffffff; font-family: ${defaultFont}; font-size: ${Math.round(iconSize * 0.45)}px; font-weight: bold; line-height: 1;">
-                      ${info.iconText}
+                    <td align="center" valign="middle" style="width: ${iconSize}px; height: ${iconSize}px;">
+                      ${svgWithDimensions}
                     </td>
                   </tr>
                 </table>
@@ -444,4 +441,103 @@ export function compileEmailDocumentToHtml(doc: EmailDocument): string {
   </table>
 </body>
 </html>`;
+}
+
+/**
+ * Extracts clean, human-readable plain text from an EmailDocument.
+ * Used for plain text fallbacks, list previews, and SMS/quick summaries.
+ */
+export function compileEmailDocumentToPlainText(doc: EmailDocument): string {
+  const parts: string[] = [];
+
+  if (doc.subject) {
+    parts.push(doc.subject);
+  }
+
+  for (const row of doc.rows) {
+    for (const col of row.columns) {
+      for (const block of col.blocks) {
+        switch (block.type) {
+          case "title": {
+            const c = block.content as TitleBlockContent;
+            if (c.text?.trim()) {
+              parts.push(c.text.trim());
+            }
+            break;
+          }
+          case "paragraph": {
+            const c = block.content as ParagraphBlockContent;
+            if (c.text?.trim()) {
+              parts.push(c.text.trim());
+            }
+            break;
+          }
+          case "list": {
+            const c = block.content as ListBlockContent;
+            if (c.items && c.items.length > 0) {
+              const listText = c.items
+                .map((it, idx) => (c.listType === "numbered" ? `${idx + 1}. ${it}` : `• ${it}`))
+                .join("\n");
+              parts.push(listText);
+            }
+            break;
+          }
+          case "button": {
+            const c = block.content as ButtonBlockContent;
+            if (c.text?.trim()) {
+              const url = c.url && c.url !== "#" ? ` (${c.url})` : "";
+              parts.push(`[${c.text.trim()}]${url}`);
+            }
+            break;
+          }
+          case "menu": {
+            const c = block.content as MenuBlockContent;
+            if (c.items && c.items.length > 0) {
+              const menuText = c.items.map((it) => it.label).join(" | ");
+              parts.push(menuText);
+            }
+            break;
+          }
+          case "social": {
+            const c = block.content as SocialBlockContent;
+            if (c.networks && c.networks.length > 0) {
+              const links = c.networks
+                .filter((n) => n.url && n.url !== "#")
+                .map((n) => `${n.network}: ${n.url}`)
+                .join(" | ");
+              if (links) parts.push(links);
+            }
+            break;
+          }
+          case "divider": {
+            parts.push("---");
+            break;
+          }
+          default:
+            break;
+        }
+      }
+    }
+  }
+
+  return parts.join("\n\n").trim();
+}
+
+/**
+ * Strips HTML tags and collapses spaces for plain text fallback display.
+ */
+export function stripHtmlToPlainText(html: string): string {
+  if (!html) return "";
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
 }

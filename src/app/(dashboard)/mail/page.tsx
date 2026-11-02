@@ -6,7 +6,11 @@ import { REGISTRATION_ROLES } from "@/lib/registrations"
 function threadToMail(thread: MailThreadWithMessages): MailType {
   const initialOrFirst = thread.messages && thread.messages.length > 0 ? thread.messages[0] : null;
   const lastMessage = thread.messages && thread.messages.length > 0 ? thread.messages[thread.messages.length - 1] : null;
-  const bodyText = lastMessage?.body_text || initialOrFirst?.body_text || "";
+  const rawText = lastMessage?.body_text || initialOrFirst?.body_text || "";
+  const bodyText = rawText
+    .replace(/View the full email design in the HTML preview tab\.?/gi, "")
+    .replace(/\[Full visual design active in HTML preview\]?/gi, "")
+    .trim();
 
   const roleObj = REGISTRATION_ROLES.find((r) => r.id === thread.category);
   const roleLabel = roleObj?.label ?? (thread.category ? thread.category.replace(/_/g, " ") : "Inquiry");

@@ -32,7 +32,11 @@ export function MailList({ items, onToggleStar }: MailListProps) {
             const lastMessage = item.messages && item.messages.length > 0
               ? item.messages[item.messages.length - 1]
               : null;
-            const snippet = lastMessage?.body_text || item.text;
+            const rawSnippet = lastMessage?.body_text || item.text || "";
+            const snippet = rawSnippet
+              .replace(/View the full email design in the HTML preview tab\.?/gi, "")
+              .replace(/\[Full visual design active in HTML preview\]?/gi, "")
+              .trim();
 
             return (
               <div

@@ -7,6 +7,7 @@ import {
   EmailBlock,
   BlockType,
 } from "@/lib/email-designer/types";
+import { SocialIcon, getSocialNetworkMeta } from "@/lib/email-designer/social-icons";
 import { Button } from "@/components/ui/button";
 import {
   ArrowUp,
@@ -221,17 +222,9 @@ function RenderCanvasBlock({
     case "icons": {
       const c = block.content as any;
       const networks = c.networks || [];
-      const iconSize = c.iconSize || 24;
+      const iconSize = c.iconSize || 28;
       const spacing = c.spacing || 12;
-
-      const networkIcons: Record<string, { bg: string; text: string }> = {
-        facebook: { bg: "#1877F2", text: "f" },
-        instagram: { bg: "#E4405F", text: "ig" },
-        x: { bg: "#000000", text: "X" },
-        whatsapp: { bg: "#25D366", text: "wa" },
-        website: { bg: "#1C472A", text: "web" },
-        linkedin: { bg: "#0A66C2", text: "in" },
-      };
+      const svgSize = Math.max(14, Math.round(iconSize * 0.55));
 
       return (
         <div
@@ -242,19 +235,19 @@ function RenderCanvasBlock({
         >
           <div className="inline-flex items-center" style={{ gap: `${spacing}px` }}>
             {networks.map((net: any, idx: number) => {
-              const info = networkIcons[net.network] || { bg: "#1C472A", text: "•" };
+              const meta = getSocialNetworkMeta(net.network);
               return (
                 <div
                   key={idx}
                   style={{
-                    backgroundColor: info.bg,
+                    backgroundColor: meta.bg,
                     width: `${iconSize}px`,
                     height: `${iconSize}px`,
-                    fontSize: `${Math.round(iconSize * 0.45)}px`,
                   }}
-                  className="rounded-full text-white font-bold flex items-center justify-center shrink-0 shadow-2xs"
+                  className="rounded-full text-white flex items-center justify-center shrink-0 shadow-2xs hover:scale-105 transition-transform"
+                  title={meta.label}
                 >
-                  {info.text}
+                  <SocialIcon network={net.network} size={svgSize} />
                 </div>
               );
             })}

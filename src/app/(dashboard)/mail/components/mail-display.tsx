@@ -16,7 +16,17 @@ import {
   CornerDownRight,
   ShieldCheck,
   User,
+  Eye,
+  FileText,
+  Maximize2,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import {
   DropdownMenu,
@@ -45,6 +55,170 @@ interface MailDisplayProps {
   onThreadRemoved?: (threadId: string) => void;
 }
 
+function ConversationMessageCard({
+  msg,
+  isOutbound,
+}: {
+  msg: MailMessageRow;
+  isOutbound: boolean;
+}) {
+  const hasHtml = Boolean(msg.body_html && msg.body_html.trim().length > 0);
+  const [viewMode, setViewMode] = useState<"html" | "text">(hasHtml ? "html" : "text");
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
+
+  return (
+    <div
+      className={`rounded-lg border p-4 transition-all ${
+        isOutbound
+          ? "bg-muted/40 border-primary/20 ml-4 sm:ml-8"
+          : "bg-background border-border"
+      }`}
+    >
+      {/* Message Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Avatar className="size-8">
+            <AvatarImage />
+            <AvatarFallback className="text-xs font-semibold">
+              {isOutbound ? (
+                <ShieldCheck className="size-4 text-primary" />
+              ) : (
+                (msg.from_name || "U")
+                  .split(" ")
+                  .map((c) => c[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()
+              )}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-xs text-foreground">
+                {msg.from_name}
+              </span>
+              {isOutbound ? (
+                <Badge variant="secondary" className="text-[10px] py-0 px-1 font-medium bg-primary/10 text-primary">
+                  Admin Reply
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] py-0 px-1">
+                  Inbound Submission
+                </Badge>
+              )}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {isOutbound ? `To: ${msg.to_email}` : `From: ${msg.from_email}`}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {hasHtml && (
+            <div className="flex rounded-md border p-0.5 bg-background shadow-2xs">
+              <Button
+                type="button"
+                variant={viewMode === "html" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-6 text-[10px] px-1.5 gap-1 font-medium"
+                onClick={() => setViewMode("html")}
+              >
+                <Eye className="size-3 text-[#1C472A]" />
+                Visual
+              </Button>
+              <Button
+                type="button"
+                variant={viewMode === "text" ? "secondary" : "ghost"}
+                size="sm"
+                className="h-6 text-[10px] px-1.5 gap-1 font-medium"
+                onClick={() => setViewMode("text")}
+              >
+                <FileText className="size-3 text-muted-foreground" />
+                Text
+              </Button>
+            </div>
+          )}
+
+          {hasHtml && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-6 text-[10px] px-1.5 gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setFullPreviewOpen(true)}
+              title="Expand email design"
+            >
+              <Maximize2 className="size-3" />
+              Expand
+            </Button>
+          )}
+
+          <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+            {msg.created_at ? format(new Date(msg.created_at), "PPp") : ""}
+          </span>
+        </div>
+      </div>
+
+      {/* Message Content */}
+      <div className="mt-3 pl-11">
+        {hasHtml && viewMode === "html" ? (
+          <div className="space-y-2">
+            <div className="rounded-lg border bg-white shadow-xs overflow-hidden max-w-[640px]">
+              <iframe
+                srcDoc={msg.body_html!}
+                title={msg.subject || "Email Content"}
+                className="w-full border-0 min-h-[380px]"
+                sandbox="allow-same-origin"
+                onLoad={(e) => {
+                  try {
+                    const iframe = e.currentTarget;
+                    if (iframe.contentWindow?.document?.body) {
+                      const h = iframe.contentWindow.document.body.scrollHeight;
+                      if (h > 100) {
+                        iframe.style.height = `${Math.min(h + 30, 800)}px`;
+                      }
+                    }
+                  } catch {}
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">
+            {msg.body_text}
+          </div>
+        )}
+      </div>
+
+      {/* Full Preview Modal */}
+      {hasHtml && fullPreviewOpen && (
+        <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>
+          <DialogContent className="sm:max-w-4xl max-h-[92vh] flex flex-col p-6">
+            <DialogHeader className="pb-3 border-b flex flex-row items-center justify-between">
+              <div>
+                <DialogTitle className="text-base font-bold text-foreground">
+                  {msg.subject || "Email Preview"}
+                </DialogTitle>
+                <span className="text-xs text-muted-foreground">
+                  To: {msg.to_email} • {msg.created_at ? format(new Date(msg.created_at), "PPp") : ""}
+                </span>
+              </div>
+            </DialogHeader>
+            <div className="flex-1 min-h-[500px] overflow-hidden rounded-lg border bg-white p-2 mt-2">
+              <iframe
+                srcDoc={msg.body_html!}
+                title="Full Email Preview"
+                className="w-full h-full border-0 min-h-[500px]"
+                sandbox="allow-same-origin"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+}
+
 export function MailDisplay({
   mail,
   activeAccount = defaultAccounts[0],
@@ -55,6 +229,8 @@ export function MailDisplay({
   const [replyText, setReplyText] = useState("");
   const [replyHtml, setReplyHtml] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedTemplateTitle, setSelectedTemplateTitle] = useState<string | null>(null);
+  const [replyViewMode, setReplyViewMode] = useState<"text" | "preview">("text");
   const [pending, startTransition] = useTransition();
 
   if (!mail) {
@@ -132,6 +308,8 @@ export function MailDisplay({
       setReplyText("");
       setReplyHtml(null);
       setSelectedTemplateId(null);
+      setSelectedTemplateTitle(null);
+      setReplyViewMode("text");
 
       // Optimistically update conversation
       if (res.message && onThreadUpdated) {
@@ -374,63 +552,11 @@ export function MailDisplay({
           {messages.map((msg, index) => {
             const isOutbound = msg.direction === "outbound";
             return (
-              <div
+              <ConversationMessageCard
                 key={msg.id || index}
-                className={`rounded-lg border p-4 transition-all ${
-                  isOutbound
-                    ? "bg-muted/40 border-primary/20 ml-4 sm:ml-8"
-                    : "bg-background border-border"
-                }`}
-              >
-                {/* Message Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="size-8">
-                      <AvatarImage />
-                      <AvatarFallback className="text-xs font-semibold">
-                        {isOutbound ? (
-                          <ShieldCheck className="size-4 text-primary" />
-                        ) : (
-                          (msg.from_name || "U")
-                            .split(" ")
-                            .map((c) => c[0])
-                            .slice(0, 2)
-                            .join("")
-                            .toUpperCase()
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-xs text-foreground">
-                          {isOutbound ? msg.from_name : msg.from_name}
-                        </span>
-                        {isOutbound ? (
-                          <Badge variant="secondary" className="text-[10px] py-0 px-1 font-medium bg-primary/10 text-primary">
-                            Admin Reply
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px] py-0 px-1">
-                            Inbound Submission
-                          </Badge>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-muted-foreground">
-                        {isOutbound ? `To: ${msg.to_email}` : `From: ${msg.from_email}`}
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                    {msg.created_at ? format(new Date(msg.created_at), "PPp") : ""}
-                  </span>
-                </div>
-
-                {/* Message Content */}
-                <div className="mt-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground/90 pl-11">
-                  {msg.body_text}
-                </div>
-              </div>
+                msg={msg}
+                isOutbound={isOutbound}
+              />
             );
           })}
         </div>
@@ -460,17 +586,94 @@ export function MailDisplay({
                   setReplyText(data.text);
                   setReplyHtml(data.html || null);
                   setSelectedTemplateId(data.templateId || null);
+                  setSelectedTemplateTitle(data.title || null);
+                  if (data.html) {
+                    setReplyViewMode("preview");
+                  }
                 }}
               />
             </div>
 
-            {/* Reply Textarea */}
-            <Textarea
-              className="min-h-[110px] p-3 text-xs resize-none bg-background cursor-text"
-              placeholder={`Write a reply to ${mail.name}... or click "Insert Template" above.`}
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-            />
+            {/* Active Template Banner (if loaded) */}
+            {replyHtml && (
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/10 border border-primary/20 text-xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Sparkles className="size-3.5 text-[#1C472A] shrink-0" />
+                  <span className="font-semibold text-[#1C472A] truncate">
+                    Template: {selectedTemplateTitle || "Designed Email"}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] bg-background text-[#1C472A] border-primary/30 shrink-0">
+                    HTML Ready
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex rounded-md border p-0.5 bg-background shadow-2xs">
+                    <Button
+                      type="button"
+                      variant={replyViewMode === "preview" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-6 text-[10px] px-2 gap-1 font-medium"
+                      onClick={() => setReplyViewMode("preview")}
+                    >
+                      <Eye className="size-3 text-[#1C472A]" />
+                      Preview
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={replyViewMode === "text" ? "secondary" : "ghost"}
+                      size="sm"
+                      className="h-6 text-[10px] px-2 gap-1 font-medium"
+                      onClick={() => setReplyViewMode("text")}
+                    >
+                      <FileText className="size-3 text-muted-foreground" />
+                      Edit Text
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 text-muted-foreground hover:text-destructive"
+                    onClick={() => {
+                      setReplyHtml(null);
+                      setSelectedTemplateId(null);
+                      setSelectedTemplateTitle(null);
+                      setReplyViewMode("text");
+                      toast.info("Template removed. Writing standard reply.");
+                    }}
+                    title="Remove template"
+                  >
+                    <X className="size-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Content: Preview or Textarea */}
+            {replyViewMode === "preview" && replyHtml ? (
+              <div className="w-full rounded-lg border bg-white shadow-2xs overflow-hidden flex flex-col p-2">
+                <div className="px-2 py-1 border-b bg-muted/20 text-[11px] font-mono text-muted-foreground flex items-center justify-between shrink-0 mb-1">
+                  <span>Rendering Designed Template</span>
+                  <span className="text-[10px] text-green-700 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="size-3" />
+                    Ready to Send
+                  </span>
+                </div>
+                <iframe
+                  srcDoc={replyHtml}
+                  title="Reply Template Preview"
+                  className="w-full border-0 min-h-[260px] max-h-[380px]"
+                  sandbox="allow-same-origin"
+                />
+              </div>
+            ) : (
+              <Textarea
+                className="min-h-[110px] p-3 text-xs resize-none bg-background cursor-text"
+                placeholder={`Write a reply to ${mail.name}... or click "Insert Template" above.`}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+              />
+            )}
 
             {/* Footer with Send Button */}
             <div className="flex items-center justify-between">
@@ -480,7 +683,7 @@ export function MailDisplay({
               <Button
                 type="submit"
                 size="sm"
-                disabled={pending || !replyText.trim()}
+                disabled={pending || (!replyText.trim() && !replyHtml)}
                 className="gap-2 cursor-pointer font-medium"
               >
                 <Send className="size-3.5" />

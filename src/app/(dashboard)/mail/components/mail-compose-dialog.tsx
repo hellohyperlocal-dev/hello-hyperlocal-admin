@@ -42,7 +42,11 @@ import {
 } from "./template-picker-popover";
 import { getDesignerTemplateByIdAction } from "@/lib/email-designer/actions";
 import { STARTER_TEMPLATES } from "@/lib/email-designer/presets";
-import { compileEmailDocumentToHtml } from "@/lib/email-designer/compiler";
+import {
+  compileEmailDocumentToHtml,
+  compileEmailDocumentToPlainText,
+  stripHtmlToPlainText,
+} from "@/lib/email-designer/compiler";
 
 interface MailComposeDialogProps {
   open: boolean;
@@ -88,11 +92,10 @@ export function MailComposeDialog({
     const starter = STARTER_TEMPLATES.find((s) => s.id === initialTemplateId);
     if (starter) {
       const html = compileEmailDocumentToHtml(starter);
+      const text = compileEmailDocumentToPlainText(starter);
       setSubject(starter.subject || starter.name);
       setBodyHtml(html);
-      setBodyText(
-        `${starter.name}\n\n${starter.description || ""}\n\n[Full visual design active in HTML preview]`
-      );
+      setBodyText(text);
       setActiveTemplateTitle(starter.name);
       setSelectedTemplateId(starter.id);
       setViewMode("preview");
@@ -103,11 +106,13 @@ export function MailComposeDialog({
       if (!mounted) return;
       if (res.success && res.template) {
         const tmpl = res.template;
+        const html = tmpl.html_content || compileEmailDocumentToHtml(tmpl.design);
+        const text = tmpl.design
+          ? compileEmailDocumentToPlainText(tmpl.design)
+          : stripHtmlToPlainText(html) || tmpl.name;
         setSubject(tmpl.subject || tmpl.name);
-        setBodyHtml(tmpl.html_content || compileEmailDocumentToHtml(tmpl.design));
-        setBodyText(
-          `${tmpl.name}\n\n${tmpl.description || ""}\n\n[Full visual design active in HTML preview]`
-        );
+        setBodyHtml(html);
+        setBodyText(text);
         setActiveTemplateTitle(tmpl.name);
         setSelectedTemplateId(tmpl.id);
         setViewMode("preview");

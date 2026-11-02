@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EmailBlock } from "@/lib/email-designer/types";
+import { SocialIcon, getSocialNetworkMeta } from "@/lib/email-designer/social-icons";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -664,17 +665,30 @@ export function BlockInspector({ block, onChange }: BlockInspectorProps) {
         <div className="space-y-4">
           <Label className="text-xs font-semibold">Social Network Links</Label>
           <div className="space-y-2">
-            {networks.map((net, idx) => (
-              <div key={idx} className="space-y-1">
-                <span className="text-[11px] font-medium capitalize text-muted-foreground">{net.network}</span>
-                <Input
-                  value={net.url || ""}
-                  onChange={(e) => updateNetworkUrl(idx, e.target.value)}
-                  placeholder={`https://${net.network}.com/...`}
-                  className="h-8 text-xs"
-                />
-              </div>
-            ))}
+            {networks.map((net, idx) => {
+              const meta = getSocialNetworkMeta(net.network);
+              return (
+                <div key={idx} className="space-y-1 p-2 rounded-md border bg-muted/10">
+                  <div className="flex items-center gap-1.5">
+                    <div
+                      style={{ backgroundColor: meta.bg }}
+                      className="size-5 rounded-full flex items-center justify-center shrink-0"
+                    >
+                      <SocialIcon network={net.network} size={11} />
+                    </div>
+                    <span className="text-[11px] font-semibold text-foreground">
+                      {meta.label}
+                    </span>
+                  </div>
+                  <Input
+                    value={net.url || ""}
+                    onChange={(e) => updateNetworkUrl(idx, e.target.value)}
+                    placeholder={`https://${net.network}.com/...`}
+                    className="h-8 text-xs"
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="space-y-1.5">

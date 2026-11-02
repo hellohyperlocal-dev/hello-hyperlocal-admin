@@ -27,7 +27,11 @@ import { EMAIL_TEMPLATES } from "@/lib/email-templates/templates";
 import { STARTER_TEMPLATES } from "@/lib/email-designer/presets";
 import { getDesignerTemplatesAction } from "@/lib/email-designer/actions";
 import { EmailDesignerTemplateRecord } from "@/lib/email-designer/types";
-import { compileEmailDocumentToHtml } from "@/lib/email-designer/compiler";
+import {
+  compileEmailDocumentToHtml,
+  compileEmailDocumentToPlainText,
+  stripHtmlToPlainText,
+} from "@/lib/email-designer/compiler";
 import { toast } from "sonner";
 
 export interface SelectedTemplateData {
@@ -94,18 +98,25 @@ export function TemplatePickerPopover({
       category?: string;
       subject?: string;
       html: string;
+      plainText: string;
       isCustom?: boolean;
     }[] = [];
 
     // 1. User saved templates
     designerTemplates.forEach((t) => {
+      const html = t.html_content || compileEmailDocumentToHtml(t.design);
+      const plainText = t.design
+        ? compileEmailDocumentToPlainText(t.design)
+        : stripHtmlToPlainText(html) || t.name;
+
       list.push({
         id: t.id,
         name: t.name,
         description: t.description,
         category: t.category,
         subject: t.subject,
-        html: t.html_content || compileEmailDocumentToHtml(t.design),
+        html,
+        plainText,
         isCustom: true,
       });
     });
@@ -113,13 +124,17 @@ export function TemplatePickerPopover({
     // 2. Curated starter templates (excluding Blank Canvas)
     STARTER_TEMPLATES.filter((s) => s.id !== "starter-blank").forEach((s) => {
       if (!list.some((existing) => existing.id === s.id)) {
+        const html = compileEmailDocumentToHtml(s);
+        const plainText = compileEmailDocumentToPlainText(s);
+
         list.push({
           id: s.id,
           name: s.name,
           description: s.description,
           category: s.category,
           subject: s.subject,
-          html: compileEmailDocumentToHtml(s),
+          html,
+          plainText,
           isCustom: false,
         });
       }
@@ -159,12 +174,11 @@ export function TemplatePickerPopover({
     name: string;
     subject?: string;
     html: string;
+    plainText: string;
     description?: string | null;
   }) => {
-    const fallbackText = `${tmpl.name}\n\n${tmpl.description || ""}\n\nView the full email design in the HTML preview tab.`;
-
     onSelectTemplate({
-      text: fallbackText,
+      text: tmpl.plainText || tmpl.name,
       html: tmpl.html,
       templateId: tmpl.id,
       subject: tmpl.subject || tmpl.name,
