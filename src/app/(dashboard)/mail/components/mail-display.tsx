@@ -20,6 +20,7 @@ import {
   FileText,
   Maximize2,
   X,
+  Copy,
 } from "lucide-react";
 import {
   Dialog,
@@ -63,8 +64,29 @@ function ConversationMessageCard({
   isOutbound: boolean;
 }) {
   const hasHtml = Boolean(msg.body_html && msg.body_html.trim().length > 0);
-  const [viewMode, setViewMode] = useState<"html" | "text">(hasHtml ? "html" : "text");
+  const [showPlainText, setShowPlainText] = useState(!hasHtml);
   const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
+  const [iframeHeight, setIframeHeight] = useState(360);
+
+  const updateHeight = (iframe: HTMLIFrameElement | null) => {
+    if (!iframe) return;
+    try {
+      const doc = iframe.contentWindow?.document;
+      if (doc?.body) {
+        doc.body.style.margin = "0";
+        doc.body.style.padding = "0";
+        const h = Math.max(
+          doc.body.scrollHeight,
+          doc.body.offsetHeight,
+          doc.documentElement.scrollHeight,
+          doc.documentElement.offsetHeight
+        );
+        if (h > 50) {
+          setIframeHeight(h + 20);
+        }
+      }
+    } catch {}
+  };
 
   return (
     <div
@@ -74,7 +96,7 @@ function ConversationMessageCard({
           : "bg-background border-border"
       }`}
     >
-      {/* Message Header */}
+      {/* Outlook-Style Message Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar className="size-8">
@@ -114,74 +136,76 @@ function ConversationMessageCard({
         </div>
 
         <div className="flex items-center gap-2">
-          {hasHtml && (
-            <div className="flex rounded-md border p-0.5 bg-background shadow-2xs">
-              <Button
-                type="button"
-                variant={viewMode === "html" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-6 text-[10px] px-1.5 gap-1 font-medium"
-                onClick={() => setViewMode("html")}
-              >
-                <Eye className="size-3 text-[#1C472A]" />
-                Visual
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === "text" ? "secondary" : "ghost"}
-                size="sm"
-                className="h-6 text-[10px] px-1.5 gap-1 font-medium"
-                onClick={() => setViewMode("text")}
-              >
-                <FileText className="size-3 text-muted-foreground" />
-                Text
-              </Button>
-            </div>
-          )}
-
-          {hasHtml && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-6 text-[10px] px-1.5 gap-1 text-muted-foreground hover:text-foreground"
-              onClick={() => setFullPreviewOpen(true)}
-              title="Expand email design"
-            >
-              <Maximize2 className="size-3" />
-              Expand
-            </Button>
-          )}
-
           <span className="text-[11px] text-muted-foreground whitespace-nowrap">
             {msg.created_at ? format(new Date(msg.created_at), "PPp") : ""}
           </span>
+
+          {/* Action Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-foreground">
+                <MoreVertical className="size-3.5" />
+                <span className="sr-only">Message options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 text-xs">
+              {hasHtml && (
+                <DropdownMenuItem
+                  onClick={() => setFullPreviewOpen(true)}
+                  className="gap-2 cursor-pointer"
+                >
+                  <Maximize2 className="size-3.5 text-muted-foreground" />
+                  Open in Full Window
+                </DropdownMenuItem>
+              )}
+              {hasHtml && (
+                <DropdownMenuItem
+                  onClick={() => setShowPlainText((prev) => !prev)}
+                  className="gap-2 cursor-pointer"
+                >
+                  <FileText className="size-3.5 text-muted-foreground" />
+                  {showPlainText ? "View Formatted Email" : "View Plain Text"}
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(msg.body_text || "");
+                  toast.success("Message text copied.");
+                }}
+                className="gap-2 cursor-pointer"
+              >
+                <Copy className="size-3.5 text-muted-foreground" />
+                Copy Text
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* Message Content */}
+      {/* Message Body */}
       <div className="mt-3 pl-11">
-        {hasHtml && viewMode === "html" ? (
-          <div className="space-y-2">
-            <div className="rounded-lg border bg-white shadow-xs overflow-hidden max-w-[640px]">
-              <iframe
-                srcDoc={msg.body_html!}
-                title={msg.subject || "Email Content"}
-                className="w-full border-0 min-h-[380px]"
-                sandbox="allow-same-origin"
-                onLoad={(e) => {
-                  try {
-                    const iframe = e.currentTarget;
-                    if (iframe.contentWindow?.document?.body) {
-                      const h = iframe.contentWindow.document.body.scrollHeight;
-                      if (h > 100) {
-                        iframe.style.height = `${Math.min(h + 30, 800)}px`;
-                      }
-                    }
-                  } catch {}
-                }}
-              />
-            </div>
+        {hasHtml && !showPlainText ? (
+          <div className="w-full max-w-[680px]">
+            <iframe
+              ref={(el) => {
+                if (el) {
+                  setTimeout(() => updateHeight(el), 100);
+                  setTimeout(() => updateHeight(el), 400);
+                }
+              }}
+              srcDoc={msg.body_html!}
+              title={msg.subject || "Email Content"}
+              className="w-full border-0 bg-transparent rounded-md"
+              sandbox="allow-same-origin"
+              scrolling="no"
+              style={{
+                height: `${iframeHeight}px`,
+                width: "100%",
+                maxWidth: "680px",
+                display: "block",
+              }}
+              onLoad={(e) => updateHeight(e.currentTarget)}
+            />
           </div>
         ) : (
           <div className="text-xs leading-relaxed whitespace-pre-wrap text-foreground/90">
@@ -281,12 +305,22 @@ export function MailDisplay({
       ];
 
   const handleSendReply = () => {
-    if (!replyText.trim()) {
+    if (!replyText.trim() && !replyHtml) {
       toast.error("Please enter a reply message before sending.");
       return;
     }
 
     startTransition(async () => {
+      const finalHtml = replyHtml
+        ? (replyText.trim()
+            ? `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1c472a; padding: 14px 18px; background-color: #f7faf7; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #1c472a;">
+                <p style="margin: 0; white-space: pre-wrap;">${replyText.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+              </div>${replyHtml}`
+            : replyHtml)
+        : null;
+
+      const finalText = replyText.trim() || (replyHtml ? "Please view the formatted email message below." : "");
+
       const res = await sendReplyAction({
         threadId: mail.id,
         fromEmail: activeAccount.email,
@@ -294,8 +328,8 @@ export function MailDisplay({
         toEmail: mail.email,
         toName: mail.name,
         subject: mail.subject.startsWith("Re:") ? mail.subject : `Re: ${mail.subject}`,
-        bodyText: replyText,
-        bodyHtml: replyHtml,
+        bodyText: finalText,
+        bodyHtml: finalHtml,
         templateId: selectedTemplateId,
       });
 
@@ -583,12 +617,18 @@ export function MailDisplay({
                 recipientEmail={mail.email}
                 category={mail.category}
                 onSelectTemplate={(data) => {
-                  setReplyText(data.text);
-                  setReplyHtml(data.html || null);
-                  setSelectedTemplateId(data.templateId || null);
-                  setSelectedTemplateTitle(data.title || null);
                   if (data.html) {
+                    setReplyHtml(data.html);
+                    setReplyText("");
+                    setSelectedTemplateId(data.templateId || null);
+                    setSelectedTemplateTitle(data.title || null);
                     setReplyViewMode("preview");
+                  } else {
+                    setReplyText(data.text);
+                    setReplyHtml(null);
+                    setSelectedTemplateId(data.templateId || null);
+                    setSelectedTemplateTitle(data.title || null);
+                    setReplyViewMode("text");
                   }
                 }}
               />
@@ -596,39 +636,27 @@ export function MailDisplay({
 
             {/* Active Template Banner (if loaded) */}
             {replyHtml && (
-              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/10 border border-primary/20 text-xs">
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-primary/5 border border-primary/20 text-xs">
                 <div className="flex items-center gap-2 min-w-0">
                   <Sparkles className="size-3.5 text-[#1C472A] shrink-0" />
                   <span className="font-semibold text-[#1C472A] truncate">
-                    Template: {selectedTemplateTitle || "Designed Email"}
+                    Attached Template: {selectedTemplateTitle || "Designed Email"}
                   </span>
                   <Badge variant="outline" className="text-[10px] bg-background text-[#1C472A] border-primary/30 shrink-0">
-                    HTML Ready
+                    Will be sent to recipient
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex rounded-md border p-0.5 bg-background shadow-2xs">
-                    <Button
-                      type="button"
-                      variant={replyViewMode === "preview" ? "secondary" : "ghost"}
-                      size="sm"
-                      className="h-6 text-[10px] px-2 gap-1 font-medium"
-                      onClick={() => setReplyViewMode("preview")}
-                    >
-                      <Eye className="size-3 text-[#1C472A]" />
-                      Preview
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={replyViewMode === "text" ? "secondary" : "ghost"}
-                      size="sm"
-                      className="h-6 text-[10px] px-2 gap-1 font-medium"
-                      onClick={() => setReplyViewMode("text")}
-                    >
-                      <FileText className="size-3 text-muted-foreground" />
-                      Edit Text
-                    </Button>
-                  </div>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-[11px] px-2 gap-1 text-[#1C472A] hover:bg-primary/10"
+                    onClick={() => setReplyViewMode((prev) => (prev === "preview" ? "text" : "preview"))}
+                  >
+                    <Eye className="size-3" />
+                    {replyViewMode === "preview" ? "Hide Preview" : "Preview Design"}
+                  </Button>
                   <Button
                     type="button"
                     variant="ghost"
@@ -643,20 +671,20 @@ export function MailDisplay({
                     }}
                     title="Remove template"
                   >
-                    <X className="size-3" />
+                    <X className="size-3.5" />
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Content: Preview or Textarea */}
-            {replyViewMode === "preview" && replyHtml ? (
-              <div className="w-full rounded-lg border bg-white shadow-2xs overflow-hidden flex flex-col p-2">
+            {/* Template preview card when expanded */}
+            {replyHtml && replyViewMode === "preview" && (
+              <div className="w-full rounded-lg border bg-white shadow-2xs overflow-hidden flex flex-col p-2 max-w-[680px]">
                 <div className="px-2 py-1 border-b bg-muted/20 text-[11px] font-mono text-muted-foreground flex items-center justify-between shrink-0 mb-1">
-                  <span>Rendering Designed Template</span>
+                  <span>Attached Email Layout Preview</span>
                   <span className="text-[10px] text-green-700 font-semibold flex items-center gap-1">
                     <CheckCircle2 className="size-3" />
-                    Ready to Send
+                    Client Ready
                   </span>
                 </div>
                 <iframe
@@ -666,14 +694,19 @@ export function MailDisplay({
                   sandbox="allow-same-origin"
                 />
               </div>
-            ) : (
-              <Textarea
-                className="min-h-[110px] p-3 text-xs resize-none bg-background cursor-text"
-                placeholder={`Write a reply to ${mail.name}... or click "Insert Template" above.`}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-              />
             )}
+
+            {/* Reply Textarea */}
+            <Textarea
+              className="min-h-[100px] p-3 text-xs resize-none bg-background cursor-text"
+              placeholder={
+                replyHtml
+                  ? `Write an optional personal message to ${mail.name}... (will accompany your attached template)`
+                  : `Write a reply to ${mail.name}... or click "Insert Template" above.`
+              }
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+            />
 
             {/* Footer with Send Button */}
             <div className="flex items-center justify-between">

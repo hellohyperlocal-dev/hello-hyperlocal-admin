@@ -229,14 +229,24 @@ export function MailComposeDialog({
 
     setIsSubmitting(true);
     try {
+      const finalHtml = bodyHtml
+        ? (bodyText.trim()
+            ? `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1c472a; padding: 14px 18px; background-color: #f7faf7; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #1c472a;">
+                <p style="margin: 0; white-space: pre-wrap;">${bodyText.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>
+              </div>${bodyHtml}`
+            : bodyHtml)
+        : null;
+
+      const finalText = bodyText.trim() || (bodyHtml ? "Please view the formatted email design below." : "");
+
       const res = await composeEmailAction({
         fromEmail: activeAccount.email,
         fromName: activeAccount.label,
         toEmail: recipientEmail,
         toName: recipient?.name || recipientEmail,
         subject: subject.trim(),
-        bodyText: bodyText.trim(),
-        bodyHtml: bodyHtml || null,
+        bodyText: finalText,
+        bodyHtml: finalHtml,
         templateId: selectedTemplateId,
         category: recipient?.category || "general_enquiry",
       });
