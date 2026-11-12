@@ -14,6 +14,7 @@ import {
   Archive,
   Clock3,
   Palette,
+  HeartHandshake,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Community",
     items: [
+      { href: "/community-projects", label: "Community Projects", icon: HeartHandshake },
       { href: "/registrations", label: "Registrations", icon: Inbox },
       { href: "/listings", label: "Businesses & Listings", icon: Store },
       { href: "/users", label: "Users", icon: Users },

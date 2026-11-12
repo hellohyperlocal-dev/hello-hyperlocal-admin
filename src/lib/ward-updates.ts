@@ -7,8 +7,11 @@ export interface WardUpdateItem {
   category: string;
   ward: string;
   body: string;
+  summary?: string | null;
   isPinned: boolean;
   imageUrl: string | null;
+  sourceName?: string | null;
+  isAutoIngested?: boolean;
   createdAt: string;
   date: string;
   councillorId: string | null;
@@ -136,7 +139,7 @@ export async function getWardUpdatesDashboardData(): Promise<WardUpdatesDashboar
   const [updatesRes, reactionsRes, councillorsRes] = await Promise.all([
     supabase
       .from("ward_updates")
-      .select("id, category, title, ward, body, is_pinned, image_url, created_at, councillor_id, profiles!councillor_id(full_name, avatar_url)")
+      .select("id, category, title, ward, body, summary, is_pinned, image_url, source_name, is_auto_ingested, created_at, councillor_id, profiles!councillor_id(full_name, avatar_url)")
       .order("created_at", { ascending: false })
       .limit(200),
     supabase
@@ -174,8 +177,11 @@ export async function getWardUpdatesDashboardData(): Promise<WardUpdatesDashboar
       category: u.category || "notice",
       ward: u.ward || "Ward 87",
       body: u.body || "",
+      summary: u.summary || null,
       isPinned: Boolean(u.is_pinned),
       imageUrl: u.image_url || null,
+      sourceName: u.source_name || null,
+      isAutoIngested: Boolean(u.is_auto_ingested),
       createdAt: u.created_at,
       date: formatDate(u.created_at),
       councillorId: u.councillor_id || null,

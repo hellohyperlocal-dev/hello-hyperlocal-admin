@@ -126,6 +126,11 @@ const CATEGORY_CONFIG: Record<
     icon: Info,
     color: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-300/40",
   },
+  refuse: {
+    label: "Refuse / Pikitup",
+    icon: Trash2,
+    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300/40",
+  },
 };
 
 export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
@@ -206,6 +211,11 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
                 <p className="truncate text-sm font-semibold text-foreground flex items-center gap-1.5">
                   {item.isPinned && <Pin className="size-3.5 text-primary shrink-0" />}
                   <span className="truncate">{item.title}</span>
+                  {item.isAutoIngested && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0 font-normal">
+                      WhatsApp
+                    </Badge>
+                  )}
                 </p>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.body.slice(0, 100)}</p>
               </div>
@@ -563,6 +573,7 @@ export function WardUpdatesView({ initialData }: WardUpdatesViewProps) {
               <SelectItem value="load-shedding" className="text-xs sm:text-sm cursor-pointer">Load-Shedding</SelectItem>
               <SelectItem value="road-closure" className="text-xs sm:text-sm cursor-pointer">Road Closure</SelectItem>
               <SelectItem value="safety" className="text-xs sm:text-sm cursor-pointer">Public Safety</SelectItem>
+              <SelectItem value="refuse" className="text-xs sm:text-sm cursor-pointer">Refuse / Pikitup</SelectItem>
             </SelectContent>
           </Select>
 
